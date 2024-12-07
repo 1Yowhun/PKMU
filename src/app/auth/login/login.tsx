@@ -49,7 +49,7 @@ export function LoginForm() {
       router.push("/auth/login");
     } else {
       setIsLoading(false); 
-      router.push("/dashboard/alokasi");
+      router.push("/summary");
       toast({
         title: "Login has been successfully",
       });
@@ -61,7 +61,7 @@ export function LoginForm() {
       <CardHeader className="pb-4">
         <CardTitle className="text-2xl font-semibold flex justify-between">
           Welcome back!
-          <ToggleMode />
+          {/* <ToggleMode /> */}
         </CardTitle>
         <CardDescription className="text-gray-500">
           Sign in to your account to continue.

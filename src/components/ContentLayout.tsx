@@ -2,7 +2,7 @@ import AppHeader from "./Header/AppHeader";
 
 interface ContentLayoutProps {
   home: string;
-  mainpage: string;
+  mainpage?: string;
   childpage? : string;
   childrenpage? : string;
   children: React.ReactNode;

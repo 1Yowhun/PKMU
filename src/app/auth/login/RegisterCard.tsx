@@ -43,12 +43,14 @@ const SignUpForm = () => {
       router.push("/auth/login");
       toast({
         variant: "destructive",
-        title: res.error,
+        title: "Gagal",
+        description: res.error,
       });
     } else {
-      router.push("/dashboard/alokasi");
+      router.push("/summary");
       toast({
-        title: "Register has been succesfully",
+        title: "Berhasill",
+        description: "Register Berhasil"
       });
     }
   }
@@ -58,7 +60,7 @@ const SignUpForm = () => {
       <CardHeader className="pb-4">
         <CardTitle className="text-2xl font-semibold flex justify-between">
           Welcome back!
-          <ToggleMode />
+          {/* <ToggleMode /> */}
         </CardTitle>
         <CardDescription className="text-gray-500">
           Sign Up your account to continue.

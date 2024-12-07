@@ -1,5 +1,5 @@
 "use server";
-export const getErrorMessage = (error: unknown): string => {
+export const getErrorMessage = async (error: unknown): Promise<string> => {
   let message: string;
 
   if (error instanceof Error) {

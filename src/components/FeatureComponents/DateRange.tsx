@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState, useEffect } from "react";
+import { id } from "date-fns/locale";
 
 interface DatePickerWithRangeProps extends React.HTMLAttributes<HTMLDivElement> {
     onDateChange?: (dateRange: any) => void;
@@ -31,6 +32,7 @@ export function DatePickerWithRange({
 
     const handleDateChange = (newDate: any) => {
         setDate(newDate);
+        console.log(onDateChange)
         if (onDateChange) {
             onDateChange(newDate); 
         }
@@ -51,10 +53,10 @@ export function DatePickerWithRange({
                         {date?.from ? (
                             date.to ? (
                                 <>
-                                    {format(date.from, "dd MMM yyyy")} - {format(date.to, "dd MMM yyyy")}
+                                    {format(date.from, "dd MMM yyyy", { locale: id })} - {format(date.to, "dd MMM yyyy", { locale: id })}
                                 </>
                             ) : (
-                                format(date.from, "dd MMM yyyy")
+                                format(date.from, "dd MMM yyyy", { locale: id })
                             )
                         ) : (
                             <span>{placeholder}</span>
@@ -72,6 +74,7 @@ export function DatePickerWithRange({
                         }
                         onSelect={handleDateChange}
                         numberOfMonths={2}
+                        locale={id}
                     />
                 </PopoverContent>
             </Popover>

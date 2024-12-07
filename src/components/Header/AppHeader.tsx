@@ -19,7 +19,7 @@ import { redirect } from "next/navigation";
 
 interface HeaderProps {
   home: string;
-  mainpage: string;
+  mainpage?: string;
   childpage?: string;
   childrenpage?: string;
 }
@@ -101,7 +101,7 @@ export default async function AppHeader({
           </Breadcrumb>
         </div>
         <div className="flex flex-1 items-center justify-end gap-5">
-          <ToggleMode />
+          {/* <ToggleMode /> */}
           <Profile name={name} />
         </div>
       </div>

@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { useSidebarToggle } from "@/hooks/useSidebarToggle";
 import { useStore } from "zustand";
 import { cn } from "@/lib/utils";
-import { Link } from "lucide-react";
 import { SidebarToggle } from "./SidebarToggle";
 import { Button } from "../ui/button";
 import { Menu } from "./Menu";
+import Link from "next/link";
 
 export default function Sidebar({}) {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -24,7 +24,7 @@ export default function Sidebar({}) {
   };
 
   useEffect(() => {
-      if (pathname === "/dashboard/alokasi") {
+      if (pathname === "/dashboard/alokasi-harian") {
         setSelectedKeys(['2']);
       } else if (pathname === "/dashboard/penyaluran-elpiji") {
         setSelectedKeys(['3']);
@@ -38,6 +38,9 @@ export default function Sidebar({}) {
         setSelectedKeys(['7']);
       } else if (pathname === "/register") {
         updateSelectedKey("8");
+      } 
+      else if (pathname === "/summary") {
+        updateSelectedKey("9");
       } 
       // TODO
       // if (userRole === "admin" && pathname === "/register") {
@@ -53,7 +56,8 @@ export default function Sidebar({}) {
       )}
     >
       <SidebarToggle isOpen={sidebar?.isOpen} setIsOpen={sidebar?.setIsOpen} />
-      <div className="relative h-full flex flex-col px-3 py-4 overflow-y-auto shadow-md dark:shadow-zinc-800">
+      {/* bg-slate-300 dark:bg-slate-800 */}
+      <div className="relative h-full flex flex-col px-3 py-4 overflow-y-auto shadow-md dark:shadow-zinc-800 ">
         <Button
           className={cn(
             "transition-transform ease-in-out duration-300 mb-1",
@@ -62,7 +66,7 @@ export default function Sidebar({}) {
           variant="link"
           asChild
         >
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/dashboard/alokasi-harian" className="flex items-center gap-2">
             <h1
               className={cn(
                 "font-bold text-lg whitespace-nowrap transition-[transform,opacity,display] ease-in-out duration-500",

@@ -11,8 +11,8 @@ export const metadata = {
 
 const CompanyPage = async () => {
   const data = await getCompaniesAll();
-  const dataUser = await getCurrentSession();
-  if (!dataUser.session && !dataUser.user) {
+  const { user, session } = await getCurrentSession();
+  if (!session && !user) {
     redirect("/auth/login");
   }
 
@@ -20,7 +20,9 @@ const CompanyPage = async () => {
     <ContentLayout
       home={"master-data"}
       mainpage={"perusahaan"}
-      children={<Companies columns={companiesColumns} data={data} />}
+      children={
+        <Companies columns={companiesColumns} data={data} user={user} />
+      }
     />
   );
 };

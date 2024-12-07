@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import * as XLSX from "xlsx";
+import { read, utils } from "xlsx";
 import {
   Table,
   TableBody,
@@ -10,12 +10,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"; 
+} from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { MonthlyAllocation, RawDataMapMonthly } from "@/lib/types";
 import { uploadBulkExcelMonthly } from "@/app/actions/upload-file.action";
 import { Loader } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 
 export default function UploadAlokasiBulanan({
   user,
@@ -23,12 +23,13 @@ export default function UploadAlokasiBulanan({
   user: {
     id: string;
     username: string;
+    role: string;
   };
 }) {
-  const router = useRouter(); 
+  const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [tableData, setTableData] = useState<MonthlyAllocation[]>([]);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,22 +80,53 @@ export default function UploadAlokasiBulanan({
     reader.onload = (e) => {
       const data = e.target?.result;
       if (data) {
-        const workbook = XLSX.read(data, { type: "binary" });
+        const workbook = read(data, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
         const workSheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(workSheet);
+
+        const requiredColumns = [
+          "Total_Elpiji",
+          "Tanggal",
+          "Volume_Total_Elpiji",
+        ];
+        const sheetHeaders: any = utils.sheet_to_json(workSheet, {
+          header: 1,
+        })[0];
+        const missingColumns = requiredColumns.filter(
+          (col) => !sheetHeaders.includes(col)
+        );
+
+        if (missingColumns.length > 0) {
+          toast({
+            title: `Kolom yang hilang: ${missingColumns.join(
+              ", "
+            )}. Harap periksa format file Anda.`,
+            variant: "destructive",
+          });
+          return;
+        }
+        const json = utils.sheet_to_json(workSheet);
         const uploadedData = json as RawDataMapMonthly[];
 
-        const transformedData = uploadedData.map((row) => ({
-          date:
-            typeof row.Tanggal === "number"
-              ? excelDateToJSDate(row.Tanggal)
-              : row.Tanggal,
-          totalElpiji: row.Total_Elpiji,
-          volume: row.Volume_Total_Elpiji,
-          createdBy: user.id,
-          updatedBy: user.id,
-        }));
+        const transformedData = uploadedData.map((row) => {
+          if (!row.Total_Elpiji || !row.Tanggal || !row.Volume_Total_Elpiji) {
+            toast({
+              title: "Gagal",
+              description: "Data tidak valid, ada nilai yang kosong/undefiend.",
+              variant: "destructive",
+            });
+          }
+          return {
+            date:
+              typeof row.Tanggal === "number"
+                ? excelDateToJSDate(row.Tanggal)
+                : row.Tanggal,
+            totalElpiji: row.Total_Elpiji,
+            volume: row.Volume_Total_Elpiji,
+            createdBy: user.id,
+            updatedBy: user.id,
+          };
+        });
 
         setTableData(transformedData);
       }
@@ -107,22 +139,22 @@ export default function UploadAlokasiBulanan({
     if (selectedFile && tableData.length > 0) {
       const result = await uploadBulkExcelMonthly(tableData);
       if (result?.error) {
-        setLoading(false); 
+        setLoading(false);
         toast({
           title: "Gagal",
           description: result.error,
           variant: "destructive",
         });
       } else {
-        setLoading(false); 
-        router.back();
+        setLoading(false);
         toast({
           title: "Berhasil",
           description: "Alokasi Bulanan berhasil ditambahkan",
         });
+        router.push("/dashboard/alokasi-bulanan/");
       }
     } else {
-      setLoading(false); 
+      setLoading(false);
       toast({
         title:
           selectedFile == null
@@ -132,6 +164,14 @@ export default function UploadAlokasiBulanan({
       });
     }
   };
+
+  if (user.role != "ADMIN") {
+    toast({
+      variant: "destructive",
+      title: "Hanya admin yang bisa akses",
+    });
+    redirect("/dashboard/penyaluran-elpiji");
+  }
 
   return (
     <div className="flex flex-col items-center justify-center gap-8 px-4 py-12 md:px-6 lg:px-8">
@@ -194,10 +234,12 @@ export default function UploadAlokasiBulanan({
           >
             {loading ? (
               <div className="flex items-center">
-                <Loader className="mr-2 animate-spin"/> Uploading...
+                <Loader className="mr-2 animate-spin" /> Uploading...
               </div>
+            ) : tableData.length > 0 ? (
+              "Upload"
             ) : (
-              tableData.length > 0 ? "Upload" : "Impor"
+              "Impor"
             )}
           </Button>
         </div>

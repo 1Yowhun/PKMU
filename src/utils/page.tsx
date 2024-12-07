@@ -37,7 +37,40 @@ export const generateColor = (index: number) => {
     return pastelColorPalette[index % pastelColorPalette.length];  
 };
 
-export const formatDate = (date:any) => {
+export const formatNumberQty = (num: number): string => {
+    return num.toLocaleString('id-ID'); 
+};
+export const calculateTotalQty = (items: any[], property: string): number => {
+    return items.reduce((sum, item) => {
+      const value = item[property] !== null && item[property] !== undefined ? item[property] : 0;
+      
+      // Check if value is an object
+      if (typeof value === "object") {
+        // console.log("Object found:", value);
+        return sum; 
+      }
+      
+      return sum + value;
+    }, 0);
+  };
+
+export const calculateSummaryQty = (items: any[], propertyPath: string): number => {
+    return items.reduce((sum, item) => {
+      // Access nested properties safely
+      const value = propertyPath.split('.').reduce((acc, key) => acc && acc[key], item) ?? 0;
+      return sum + (typeof value === 'number' ? value : 0); 
+    }, 0);
+};
+
+export const calculateMontlyQty = (items: any) => {
+    return items.reduce((sum: any, item: { totalElpiji: any; }) => sum + item.totalElpiji, 0);
+};
+
+export const calculateTotalAgen = (data: { agentName: string }[]) => {
+    return new Set(data.map((item) => item.agentName)).size;
+};
+
+export const formatDateTime = (date:any) => {
     return date
         ? `${date.toLocaleDateString("id-ID", {
             weekday: "long",
@@ -64,9 +97,8 @@ export const normalizeDateTo = (date: Date) => {
     return normalized;
 };
 
-export const getMonthlyTotalQty = (data: any[]) => {
+export const getAnnualTotalQty = (data: any[]) => {
     const thisYear = getYear(new Date());
-    
     const months = eachMonthOfInterval({
         start: startOfYear(new Date()),
         end: endOfYear(new Date()),
@@ -79,65 +111,81 @@ export const getMonthlyTotalQty = (data: any[]) => {
             month: monthKey,
             totalQty: 0,
         };
-        });
+    });
 
-        // Sum the quantities based on the month
-        data.forEach((item) => {
-        const itemMonth = getMonth(item.giDate); // Get the month (0-11)
-        const itemYear = getYear(item.giDate);
+    // Sum the quantities based on the month
+    data.forEach((item) => {
+        const itemMonth = getMonth(item.date); 
+        const itemYear = getYear(item.date);
         
         // If the item's year matches this year, add its qty to the appropriate month
         if (itemYear === thisYear) {
-            const monthName = format(new Date(item.giDate), "MMMM");
+            const monthName = format(new Date(item.date), "MMMM");
             const monthIndex = monthlyTotals.findIndex((m) => m.month === monthName);
             if (monthIndex > -1) {
-            monthlyTotals[monthIndex].totalQty += item.allocatedQty;
+            monthlyTotals[monthIndex].totalQty += item.qty;
             }
         }
     });
 
     return monthlyTotals.map((monthData) => ({
-    giDate: monthData.month,
-    qty: monthData.totalQty,
+        date: monthData.month,
+        qty: monthData.totalQty,
     }));
 };
 
-export const getTodayTotalQty = (data: any[]) => {
+export const getTodayTotalQty = (data: any[]): number => {
     const today = new Date();
 
-    // Filter items that match today's date and sum up the total quantity
+    // Calculate the total quantity for today's date
     const totalQty = data
         .filter((item) => {
-            const itemDate = new Date(item.giDate);
-            // Check if the item's date is the same as today
-            return isSameDay(itemDate, today);
+            const itemDate = new Date(item.date);
+            return isSameDay(itemDate, today); // Only include items from today
         })
-        .reduce((total, item) => total + item.allocatedQty, 0); // Sum up the allocated quantities
-
-    return {
-        giDate: format(today, "dd-MM-yyyy"),
-        qty: totalQty,
-    };
+        .reduce((total, item) => total + (item.qty || 0), 0);
+    
+    // Return the total quantity as a number
+    return totalQty;
 };
 
-export const getWeekTotalQty = (data: any[]) => {
+export const getWeeklyTotalQty = (data: any[]) => {
     const today = new Date();
 
     // Get the start and end of the current week
-    const startOfWeekDate = startOfWeek(today, { weekStartsOn: 1 }); // Assuming the week starts on Monday
+    const startOfWeekDate = startOfWeek(today, { weekStartsOn: 1 }); // Week starts on Monday
     const endOfWeekDate = endOfWeek(today);
 
-    // Filter items whose date is within the current week
-    return data
-        .filter((item) => {
-            const itemDate = new Date(item.giDate);
-            // Check if the item's date is within this week's range
-            return isWithinInterval(itemDate, { start: startOfWeekDate, end: endOfWeekDate });
-        })
-        .map((item) => ({
-            giDate: format(new Date(item.giDate), "dd-MM-yyyy"), 
-            qty: item.allocatedQty,
-        }));
+    // Filter data within the current week
+    const filteredData = data.filter((item) => {
+        const itemDate = new Date(item.date);
+        return isWithinInterval(itemDate, { start: startOfWeekDate, end: endOfWeekDate });
+    });
+
+    // Accumulate quantities by date
+    const accumulatedData = filteredData.reduce((acc, item) => {
+        const formattedDate = format(new Date(item.date), "dd-MM-yyyy");
+        if (!acc.has(formattedDate)) {
+            acc.set(formattedDate, item.qty);
+        } else {
+            acc.set(formattedDate, acc.get(formattedDate)! + item.qty);
+        }
+        return acc;
+    }, new Map<string, number>());
+
+    // Convert the Map back to an array
+    return Array.from(accumulatedData, ([date, qty]) => ({ date, qty }));
+};
+
+// Setting the data to output date, and qty for chart
+export const setConfigData = (data: any[], mapping: { [key: string]: string }) => {
+    return data.map((item) => {
+      const result: { [key: string]: any } = {};
+        Object.keys(mapping).forEach((key) => {
+            result[key] = item[mapping[key]];
+        });
+        return result;
+    });
 };
 
 export function toNormalCase(str: string): string {

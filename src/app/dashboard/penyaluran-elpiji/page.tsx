@@ -11,8 +11,8 @@ export const metadata = {
 
 const PenyaluranElpijiPage = async () => {
   const data = await getAllLpg();
-  const dataUser = await getCurrentSession();
-  if (!dataUser.session && !dataUser.user) {
+  const { session, user } = await getCurrentSession();
+  if (!session && !user) {
     redirect("/auth/login");
   }
   return (
@@ -20,7 +20,11 @@ const PenyaluranElpijiPage = async () => {
       home={"dashboard"}
       mainpage={"penyaluran-elpiji"}
       children={
-        <PenyaluranElpiji columns={lpgDistributionColumns} data={data} />
+        <PenyaluranElpiji
+          columns={lpgDistributionColumns}
+          data={data}
+          user={user}
+        />
       }
     />
   );

@@ -91,8 +91,7 @@ model Allocations {
   shipTo          String
   materialName    String
   agentName       String
-  plannedGiDate   String
-  period          String?
+  plannedGiDate   DateTime?
   allocatedQty    Int
   status          String            @default("Pending")
   createdAt       DateTime          @default(now())
@@ -141,22 +140,4 @@ model LpgDistributions {
   allocation      Allocations @relation(fields: [allocationId], references: [id])
   creator         User        @relation("lpgCreatedByRelation", fields: [createdBy], references: [id])
   updater         User        @relation("lpgUpdatedByRelation", fields: [updatedBy], references: [id])
-}
-
-model RawData {
-  no            Int       @id
-  plant         Int
-  shipTo        String
-  shipToName    String
-  doNumber      String
-  quantity      Int
-  uom           String
-  doStatus      String
-  material      String
-  materialName  String
-  plannedGiDate String
-  giDate        DateTime?
-  bpe           String?
-  updatedAt     DateTime  @updatedAt
-  createdAt     DateTime  @default(now())
 }

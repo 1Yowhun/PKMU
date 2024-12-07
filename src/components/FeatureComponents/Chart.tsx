@@ -7,17 +7,18 @@ import {
 } from "@/components/ui/chart";
 import { generateColor } from "@/utils/page";
 import { format, startOfWeek, endOfWeek } from "date-fns";
+import { id } from "date-fns/locale";
 
 interface DataItem {
   qty: number;
-  agentName?: string;
   giDate: Date;
 }
 
 interface ChartProps<TData> {
   config: ChartConfig;
-  data: Array<{ giDate: string; qty: number }>;
-  data2: Array<{ giDate: string; qty: number }>; 
+  data: Array<{ date: string; qty: number }>;
+  data2: Array<{ date: string; qty: number }>; 
+  data3: Array<{ date: string; qty: number }>; 
   title?: string;
   timeFrame: "weekdays" | "monthly"; 
 }
@@ -25,46 +26,93 @@ interface ChartProps<TData> {
 export function ChartComponent<TData extends DataItem>({
   data,
   data2,
+  data3,
   config,
   title,
   timeFrame,
 }: ChartProps<TData>) {
-  if (!data || data.length === 0) {
-    return <div className="text-center text-gray-500 py-4">No data</div>;
-  }
+  // console.log(data);
+  // console.log(data2);
+  // console.log(data3);
   const startDate = startOfWeek(new Date());
   const endDate = endOfWeek(new Date());
+
   const combinedData = React.useMemo(() => {
-    const map = new Map<string, { giDate: string; dailyQty?: number; monthlyQty?: number }>();
-  
-    // Process data as dailyQty
-    data.forEach(({ giDate, qty }) => {
-      if (!map.has(giDate)) {
-        map.set(giDate, { giDate, dailyQty: qty });
+    const map = new Map<string, { date: string; dailyQty?: number; monthlyQty?: number; distributionQty?: number }>();
+
+    data.forEach(({ date, qty }) => {
+      if (!map.has(date)) {
+        map.set(date, { date, dailyQty: qty });
       } else {
-        map.get(giDate)!.dailyQty = qty;
+        map.get(date)!.dailyQty = qty;
       }
     });
-  
-    // Process data2 as monthlyQty
-    data2.forEach(({ giDate, qty }) => {
-      if (!map.has(giDate)) {
-        map.set(giDate, { giDate, monthlyQty: qty });
+
+    data2.forEach(({ date, qty }) => {
+      if (!map.has(date)) {
+        map.set(date, { date, monthlyQty: qty });
       } else {
-        map.get(giDate)!.monthlyQty = qty;
+        map.get(date)!.monthlyQty = qty;
       }
     });
+
+    data3.forEach(({ date, qty }) => {
+      if (!map.has(date)) {
+        map.set(date, { date, distributionQty: qty });
+      } else {
+        map.get(date)!.distributionQty = qty;
+      }
+    });
+
+    return Array.from(map.values());
+  }, [data, data2, data3]);
+
+  const isAllDataEmpty = !data.length && !data2.length && !data3.length;
+
+  if (isAllDataEmpty) {
+    return <div className="text-center text-gray-500 py-4">No data available</div>;
+  }
+
+  // const combinedData = React.useMemo(() => {
+  //   const map = new Map<string, { date: string; dailyQty?: number; monthlyQty?: number; distributionQty? :number}>();
   
-    const result = Array.from(map.values());
-    return result;
-  }, [data, data2]);
+  //   // Process data as dailyQty
+  //   data.forEach(({ date, qty }) => {
+  //     if (!map.has(date)) {
+  //       map.set(date, { date, dailyQty: qty });
+  //     } else {
+  //       map.get(date)!.dailyQty = qty;
+  //     }
+  //   });
+  
+  //   // Process data2 as monthlyQty
+  //   data2.forEach(({ date, qty }) => {
+  //     if (!map.has(date)) {
+  //       map.set(date, { date, monthlyQty: qty });
+  //     } else {
+  //       map.get(date)!.monthlyQty = qty;
+  //     }
+  //   });
+
+  //   data3.forEach(({ date, qty }) => {
+  //     if (!map.has(date)) {
+  //       map.set(date, { date, distributionQty: qty });
+  //     } else {
+  //       map.get(date)!.distributionQty = qty;
+  //     }
+  //   });
+  
+  
+  //   const result = Array.from(map.values());
+  //   return result;
+  // }, [data, data2]);
 
   const formatXAxis = (tickItem: string) => {
+    const date = new Date(tickItem);
     if (timeFrame === "monthly") {
-      const date = new Date(tickItem);
-      return format(date, "MMM yyyy"); 
+      return format(date, "MMM yyyy", { locale: id }); // Format in Indonesian
     }
-    return format(new Date(tickItem), "dd-MM-yyyy"); 
+    return format(date, "dd-MM-yyyy", { locale: id }); // Format in Indonesian
   };
   
   return (
@@ -73,7 +121,10 @@ export function ChartComponent<TData extends DataItem>({
         <ChartContainer config={config} className="mx-auto w-full max-w-[600px] md:max-w-full aspect-square" style={{ height: '400px', maxHeight: '400px' }}>
           <AreaChart data={combinedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="giDate" />
+            <XAxis 
+              dataKey="date" 
+              // tickFormatter={timeFrame === 'monthly' ? format(new Date(), "MMMM", { locale: id }) : format(new Date(), "dd-MM-yyyy", { locale: id })} 
+            />
             <YAxis />
             <Tooltip content={<ChartTooltipContent indicator="dot" />} />
             <Area
@@ -93,7 +144,19 @@ export function ChartComponent<TData extends DataItem>({
               activeDot={{
                 r: 6,
               }}
-            /><LabelList dataKey="dailyQty" position="top" />
+            />
+            <Area
+              type="monotone"
+              dataKey="distributionQty"
+              stroke={generateColor(20)}
+              strokeWidth={2}
+              fill="url(#colorQty)"
+              dot={{ r: 4 }} 
+              activeDot={{
+                r: 6,
+              }}
+            />
+            {/* <LabelList dataKey="dailyQty" position="top" /> */}
           </AreaChart>
         </ChartContainer>
       </div>

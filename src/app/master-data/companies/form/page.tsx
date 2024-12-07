@@ -9,8 +9,8 @@ export const metadata = {
 };
 
 const FormCompanyPage = async () => {
-  const dataUser = await getCurrentSession();
-  if (!dataUser.session && !dataUser.user) {
+  const { session, user } = await getCurrentSession();
+  if (!session && !user) {
     redirect("/auth/login");
   }
   return (
@@ -18,7 +18,7 @@ const FormCompanyPage = async () => {
       home={"master-data"}
       mainpage={"companies"}
       childpage={"form"}
-      children={<Form page={"companies"} />}
+      children={<Form page={"companies"} user={user} />}
     />
   );
 };

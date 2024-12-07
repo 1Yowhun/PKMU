@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Ellipsis, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -25,15 +25,16 @@ export function Menu({ isOpen }: MenuProps) {
   const pathname = usePathname();
   const menuList = getMenuList(pathname);
   const handleClick = async () => {
-    try {
-      await logOut();
+    const result = await logOut();
+    if (result?.error) {
       toast({
-        title: "Logout telah berhasil",
-      });
-    } catch (error) {
-      toast({
-        title: "Logout Gagal",
+        title: "Gagal",
+        description: result.error,
         variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Logout berhasil",
       });
     }
   };
@@ -58,7 +59,7 @@ export function Menu({ isOpen }: MenuProps) {
                             >
                               <Link href={href}>
                                 <span
-                                  className={cn(isOpen === false ? "" : "mr-4")}
+                                  className={cn(isOpen === false ? "" : "mr-2")}
                                 >
                                   <Icon size={18} />
                                 </span>
@@ -103,7 +104,7 @@ export function Menu({ isOpen }: MenuProps) {
                 <TooltipTrigger asChild>
                   <Button
                     onClick={handleClick}
-                    variant="default"
+                    variant={isOpen === false ? "default" : "destructive"}
                     className="w-full justify-center h-10 mt-5"
                   >
                     <span className={cn(isOpen === false ? "" : "mr-4")}>

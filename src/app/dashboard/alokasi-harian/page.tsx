@@ -1,8 +1,8 @@
 import { getAllokasiAll } from "@/app/actions/alokasi.action";
 import { getCurrentSession } from "@/app/actions/auth.actions";
-import Alokasi from "@/components/Screens/Alokasi/Alokasi";
+import AlokasiHarian from "@/components/Screens/Alokasi/AlokasiHarian";
 import { ContentLayout } from "@/components/ContentLayout";
-import { allocationColumns } from "@/lib/Column";
+import { adminAllocationColumns, allocationColumns } from "@/lib/Column";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -11,15 +11,24 @@ export const metadata = {
 
 const AlokasiPage = async () => {
   const data = await getAllokasiAll();
-  const dataUser = await getCurrentSession();
-  if (!dataUser.session && !dataUser.user) {
+  const { session, user } = await getCurrentSession();
+  if (!session && !user) {
     redirect("/auth/login");
   }
+
   return (
     <ContentLayout
       home={"dashboard"}
-      mainpage={"alokasi"}
-      children={<Alokasi columns={allocationColumns} data={data} />}
+      mainpage={"alokasi-harian"}
+      children={
+        <AlokasiHarian
+          columns={
+            user.role === "ADMIN" ? adminAllocationColumns : allocationColumns
+          }
+          data={data}
+          user={user}
+        />
+      }
     />
   );
 };

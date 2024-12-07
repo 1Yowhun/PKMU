@@ -60,6 +60,11 @@ export const logOut = async () => {
 
     // Invalidate the session using session ID
     await invalidateSession(sessionId);
+  } else {
+    return {
+      error: "Tidak ada session atau user yang sedang login",
+      success: false,
+    };
   }
 
   // Delete session token cookie

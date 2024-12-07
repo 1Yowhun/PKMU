@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { Allocation, RawDataMap } from "@/lib/types";
 import { read, utils } from "xlsx";
 import { uploadBulkExcel } from "@/app/actions/upload-file.action";
@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Loader } from "lucide-react";
+import { convertStringToDate } from "@/utils/convertPlannedGiDate";
 
 export default function UploadAlokasi({
   user,
@@ -23,36 +24,51 @@ export default function UploadAlokasi({
   user: {
     id: string;
     username: string;
+    role: string;
   };
 }) {
-  const router = useRouter(); 
+  const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string[]>([]);
   const [tableData, setTableData] = useState<Allocation[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
-  
+
       // Validasi jenis file
-      const validTypes = ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"];
+      const validTypes = [
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-excel",
+      ];
       if (!validTypes.includes(file.type)) {
-        toast({ title: "Jenis file tidak valid. Harap unggah file dengan format .xlsx atau .xls.", variant: "destructive" });
+        toast({
+          title:
+            "Jenis file tidak valid. Harap unggah file dengan format .xlsx atau .xls.",
+          variant: "destructive",
+        });
         return;
       }
-  
+
       const maxSizeInBytes = 2 * 1024 * 1024; // 2 MB
       if (file.size > maxSizeInBytes) {
-        toast({ title: "Ukuran file melebihi 2 MB. Harap unggah file yang lebih kecil.", variant: "destructive" });
+        toast({
+          title:
+            "Ukuran file melebihi 2 MB. Harap unggah file yang lebih kecil.",
+          variant: "destructive",
+        });
         return;
       }
-  
+
       setSelectedFile(file);
+      setTableData([]);
+      setErrorMessage([]);
       previewExcel(file);
     }
   };
-  
+
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
@@ -65,59 +81,103 @@ export default function UploadAlokasi({
         const workbook = read(data, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
         const workSheet = workbook.Sheets[sheetName];
-  
-        const requiredColumns = ["SHIP_TO", "SHIP_TO_NAME", "DO_NUMBER", "QUANTITY", "MATERIAL_NAME", "PLANNED_GI_DATE"];
-        const sheetHeaders:any = utils.sheet_to_json(workSheet, { header: 1 })[0]; 
-        const missingColumns = requiredColumns.filter(col => !sheetHeaders.includes(col));
-  
+
+        const requiredColumns = [
+          "SHIP_TO",
+          "SHIP_TO_NAME",
+          "DO_NUMBER",
+          "QUANTITY",
+          "MATERIAL_NAME",
+          "PLANNED_GI_DATE",
+        ];
+        const sheetHeaders: any = utils.sheet_to_json(workSheet, {
+          header: 1,
+        })[0];
+        const missingColumns = requiredColumns.filter(
+          (col) => !sheetHeaders.includes(col)
+        );
+
         if (missingColumns.length > 0) {
-          toast({ title: `Kolom yang hilang: ${missingColumns.join(", ")}. Harap periksa format file Anda.`, variant:"destructive" });
+          toast({
+            title: `Kolom yang hilang: ${missingColumns.join(
+              ", "
+            )}. Harap periksa format file Anda.`,
+            variant: "destructive",
+          });
           return;
         }
-  
+
         const json = utils.sheet_to_json(workSheet);
         const uploadedData = json as RawDataMap[];
-        
-        const transformedData = uploadedData.map((row) => ({
-          shipTo: String(row.SHIP_TO),
-          agentName: String(row.SHIP_TO_NAME),
-          deliveryNumber: String(row.DO_NUMBER),
-          allocatedQty:
-            typeof row.QUANTITY === "string"
-              ? parseInt(row.QUANTITY)
-              : row.QUANTITY,
-          materialName: String(row.MATERIAL_NAME),
-          plannedGiDate: String(row.PLANNED_GI_DATE),
-          giDate: row.giDate ? new Date(row.giDate) : null,
-          createdBy: user.id,
-          updatedBy: user.id,
-        }));
-  
+
+        const transformedData = uploadedData.map((row) => {
+          if (
+            !row.SHIP_TO ||
+            !row.SHIP_TO_NAME ||
+            !row.DO_NUMBER ||
+            !row.QUANTITY ||
+            !row.MATERIAL_NAME ||
+            !row.PLANNED_GI_DATE
+          ) {
+            toast({
+              title: "Gagal",
+              description: "Data tidak valid, ada nilai yang kosong/undefiend.",
+              variant: "destructive",
+            });
+          }
+
+          // Transformasi data jika valid
+          return {
+            shipTo: String(row.SHIP_TO),
+            agentName: String(row.SHIP_TO_NAME),
+            deliveryNumber: String(row.DO_NUMBER),
+            allocatedQty:
+              typeof row.QUANTITY === "string"
+                ? parseInt(row.QUANTITY)
+                : row.QUANTITY,
+            materialName: String(row.MATERIAL_NAME),
+            plannedGiDate: convertStringToDate(row.PLANNED_GI_DATE),
+            giDate: row.giDate ? new Date(row.giDate) : null,
+            createdBy: user.id,
+            updatedBy: user.id,
+          };
+        });
+
         setTableData(transformedData);
       }
     };
     reader.readAsArrayBuffer(file);
   };
-  
+
   const uploadExcel = async () => {
     setLoading(true);
     if (selectedFile && tableData.length > 0) {
       const result = await uploadBulkExcel(tableData);
-      if (result?.error) {
+      if (result?.success) {
         setLoading(false);
-
-        toast({
-          title: "Gagal",
-          description: result.error,
-          variant: "destructive",
-        });
-      } else {
-        setLoading(false);
-        router.back();
         toast({
           title: "Berhasil",
-          description: "Alokasi Bulanan berhasil ditambahkan",
+          description: "Alokasi harian berhasil ditambahkan",
         });
+        router.push("/dashboard/alokasi-harian/");
+      } else if (result?.error) {
+        setLoading(false);
+        toast({
+          title: "Gagal",
+          description: result.error, // Display specific error message
+          variant: "destructive",
+        });
+      } else if (result?.missingAgents) {
+        setLoading(false);
+        setErrorMessage(result.missingAgents);
+      } else {
+        setLoading(false);
+        toast({
+          title: "Gagal",
+          description: "Alokasi harian gagal ditambahkan",
+          variant: "destructive",
+        });
+        location.reload();
       }
     } else {
       setLoading(false);
@@ -130,6 +190,14 @@ export default function UploadAlokasi({
       });
     }
   };
+
+  if (user.role != "ADMIN") {
+    toast({
+      variant: "destructive",
+      title: "Hanya admin yang bisa akses",
+    });
+    redirect("/dashboard/penyaluran-elpiji");
+  }
 
   return (
     <div className="flex flex-col items-center justify-center gap-8 px-4 py-12 md:px-6 lg:px-8">
@@ -179,7 +247,7 @@ export default function UploadAlokasi({
           </label>
         </div>
         <div className="mt-4 flex justify-center">
-        <Input
+          <Input
             disabled
             type="text"
             value={selectedFile ? selectedFile.name : "Upload File"}
@@ -194,47 +262,71 @@ export default function UploadAlokasi({
           >
             {loading ? (
               <div className="flex items-center">
-                <Loader className="mr-2 animate-spin"/> Uploading...
+                <Loader className="mr-2 animate-spin" /> Uploading...
               </div>
+            ) : tableData.length > 0 ? (
+              "Upload"
             ) : (
-              tableData.length > 0 ? "Upload" : "Impor"
+              "Impor"
             )}
           </Button>
         </div>
       </div>
 
-      {tableData.length > 0 && (
-        <div className="mt-8 w-full">
-          <h2 className="text-2xl font-semibold my-3">Pratinjau Excel</h2>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-lg">No</TableHead>
-                <TableHead className="text-lg">Ship To</TableHead>
-                <TableHead className="text-lg">Nama Agen</TableHead>
-                <TableHead className="text-lg">Nomer DO</TableHead>
-                <TableHead className="text-lg">Jumlah Tabung</TableHead>
-                <TableHead className="text-lg">Nama Material</TableHead>
-                <TableHead className="text-lg">Planned GI Date</TableHead>
-                <TableHead className="text-lg">GI Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableData.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell className="py-3">{index +1}</TableCell>
-                  <TableCell className="py-3">{row.shipTo}</TableCell>
-                  <TableCell className="py-3">{row.agentName}</TableCell>
-                  <TableCell className="py-3">{row.deliveryNumber}</TableCell>
-                  <TableCell className="py-3">{row.allocatedQty}</TableCell>
-                  <TableCell className="py-3">{row.materialName}</TableCell>
-                  <TableCell className="py-3">{row.plannedGiDate}</TableCell>
-                  <TableCell className="py-3">{row.giDate ? row.giDate.toLocaleDateString() : "-"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      {errorMessage.length > 0 ? (
+        // Jika ada error, tampilkan hanya pesan error
+        <div className="mt-4 text-red-600 font-semibold">
+          <p>Gagal menemukan agen berikut:</p>
+          <ul className="list-disc pl-5">
+            {/* Remove duplicates by converting to a Set, then back to an array */}
+            {Array.from(new Set(errorMessage)).map((agent, index) => (
+              <li key={index}>{agent}</li>
+            ))}
+          </ul>
         </div>
+      ) : (
+        // Jika tidak ada error, tampilkan tabel
+        tableData.length > 0 && (
+          <div className="mt-8 w-full">
+            <h2 className="text-2xl font-semibold my-3">Pratinjau Excel</h2>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-lg">No</TableHead>
+                  <TableHead className="text-lg">Ship To</TableHead>
+                  <TableHead className="text-lg">Nama Agen</TableHead>
+                  <TableHead className="text-lg">Nomer DO</TableHead>
+                  <TableHead className="text-lg">Jumlah Tabung</TableHead>
+                  <TableHead className="text-lg">Nama Material</TableHead>
+                  <TableHead className="text-lg">Planned GI Date</TableHead>
+                  <TableHead className="text-lg">GI Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tableData.map((row, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="py-3">{index + 1}</TableCell>
+                    <TableCell className="py-3">{row?.shipTo}</TableCell>
+                    <TableCell className="py-3">{row?.agentName}</TableCell>
+                    <TableCell className="py-3">
+                      {row?.deliveryNumber}
+                    </TableCell>
+                    <TableCell className="py-3">{row?.allocatedQty}</TableCell>
+                    <TableCell className="py-3">{row?.materialName}</TableCell>
+                    <TableCell className="py-3">
+                      {row?.plannedGiDate
+                        ? row?.plannedGiDate.toLocaleDateString()
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      {row?.giDate ? row?.giDate.toLocaleDateString() : "-"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )
       )}
     </div>
   );

@@ -1,13 +1,13 @@
 export interface Allocation {
   id?: number;
-  giDate?: Date | null;
+  giDate: Date | null;
   bpeNumber?: string | null;
   deliveryNumber: string;
   agentId?: string | null;
   shipTo: string;
   materialName: string;
   agentName: string;
-  plannedGiDate: string;
+  plannedGiDate: Date;
   period?: string | null;
   allocatedQty: number;
   status?: "Pending" | "Approved";
@@ -90,21 +90,6 @@ export type SignInValues = {
   role: string;
   company: any;
 };
-
-export interface RawData {
-  no: number;
-  shipTo: string;
-  agentId: string;
-  shipToName: string;
-  doNumber: string;
-  quantity: number;
-  materialName: string;
-  plannedGiDate: string;
-  giDate?: Date | null;
-  bpe?: string | null;
-  createdBy: string;
-  updatedBy: string;
-}
 
 export interface RawDataMap {
   agentId?: string | null;

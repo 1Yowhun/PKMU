@@ -75,6 +75,19 @@ export const postLpgData = async (formData: FormData) => {
       error: "Semua field harus diisi",
     };
 
+  const checkLpgData = await prisma.lpgDistributions.findMany({
+    where: {
+      giDate: waktuPengambilan,
+      bpeNumber: nomorTransaksi,
+    },
+  });
+
+  if (checkLpgData.length > 0) {
+    return {
+      error: "Data penyaluran lpg ini sudah diisi",
+    };
+  }
+
   try {
     const { user } = await getCurrentSession();
     if (!user)
@@ -111,7 +124,7 @@ export const postLpgData = async (formData: FormData) => {
         updatedBy: user.id,
       },
     });
-    revalidatePath("/dashboard/alokasi");
+    revalidatePath("/dashboard/alokasi-harian");
   } catch (error) {
     return {
       error: getErrorMessage(error),

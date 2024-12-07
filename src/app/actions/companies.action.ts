@@ -4,14 +4,11 @@ import { Companies } from "@/lib/types";
 import { getErrorMessage } from "./error.action";
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "./auth.actions";
+import { cache } from "react";
 
-export const getCompaniesAll = async () => {
-  try {
-    return await prisma.companies.findMany();
-  } catch (error) {
-    throw error;
-  }
-};
+export const getCompaniesAll = cache(async () => {
+  return await prisma.companies.findMany();
+});
 
 export const getCompaniesNameData = async () => {
   try {

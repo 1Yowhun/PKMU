@@ -30,11 +30,17 @@ interface Props {
   data?: LpgDistributionSearch[];
   companyName?: { id: number; companyName: string }[];
   bpe?: string;
+  user: {
+    id: string;
+    username: string;
+    role: string;
+  };
 }
 
-const Form = ({ page, data, companyName, bpe }: Props) => {
+const Form = ({ page, data, companyName, bpe, user }: Props) => {
   const [selectedCompanyId, setSelectedCompanyId] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [fax, setFax] = useState("");
 
   const handleCompanySelect = (value: any) => {
     const selectedCompany = companyName?.find(
@@ -58,7 +64,8 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
   const { pending } = useFormStatus();
   const nonReq =
     "cursor-not-allowed outline outline-2 outline-gray-200 bg-gray-200 dark:outline-gray-600 dark:bg-gray-700 text-slate-600 dark:text-slate-300";
-  
+  const noSpinner = "[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+
   const handleSubmitDistribution = async (formData: FormData) => {
     setLoading(true);
     const result = await postLpgData(formData);
@@ -79,7 +86,7 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
       redirect("/dashboard/penyaluran-elpiji");
     }
   };
-  
+
   const handleSubmitAgents = async (formData: FormData) => {
     setLoading(true);
     const result = await postAgentData(formData);
@@ -101,7 +108,6 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
       redirect("/master-data/agents");
     }
   };
-  
 
   const handleSubmitCompany = async (formData: FormData) => {
     setLoading(true);
@@ -123,6 +129,14 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
       redirect("/master-data/companies");
     }
   };
+
+  if (user.role != "ADMIN") {
+    toast({
+      variant: "destructive",
+      title: "Hanya admin yang bisa akses",
+    });
+    redirect("/dashboard/penyaluran-elpiji");
+  }
 
   return (
     <>
@@ -148,7 +162,7 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
                 />
               </div>
               <div className="flex flex-col my-2">
-                <Label className="font-bold text-xs my-2">Nomor DO</Label>
+                <Label className="font-bold text-xs my-2">Nomor DO  <span className="text-red-500 text-[16px]">*</span></Label>
                 <div className="flex">
                   <Input
                     placeholder="Nomor DO"
@@ -158,6 +172,7 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
                     }}
                     defaultValue={searchParams.get("query")?.toString()}
                     name="nomorDo"
+                    required
                   />
                 </div>
               </div>
@@ -181,19 +196,21 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
                   className={nonReq}
                   placeholder="Waktu pengambilan"
                   name="waktuPengambilan"
-                  value={format(new Date(), 'yyyy-MM-dd')}
+                  value={format(new Date(), "yyyy-MM-dd")}
                   readOnly
                 />
               </div>
 
               <div className="flex flex-col my-2">
-                <Label className="font-bold text-xs my-2">Plat Kendaraan</Label>
-                <Input placeholder="Plat kendaraan" name="platKendaraan" />
+              <Label className="font-bold text-xs my-2">
+                Plat Kendaraan <span className="text-red-500 text-[16px]">*</span>
+              </Label>
+                <Input placeholder="Plat kendaraan" name="platKendaraan" required/>
               </div>
 
               <div className="flex flex-col my-2">
-                <Label className="font-bold text-xs my-2">Nama Sopir</Label>
-                <Input placeholder="Nama sopir" name="namaSopir" />
+                <Label className="font-bold text-xs my-2">Nama Sopir <span className="text-red-500 text-[16px]">*</span></Label>
+                <Input placeholder="Nama sopir" name="namaSopir" required />
               </div>
 
               <div className="flex flex-col my-2">
@@ -203,7 +220,6 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Pending" >Pending</SelectItem>
                     <SelectItem value="Approved">Approved</SelectItem>
                   </SelectContent>
                 </Select>
@@ -217,7 +233,7 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
                   placeholder="Jumlah tabung"
                   name="jumlahTabung"
                   value={data && data.length > 0 ? data[0].allocatedQty : ""}
-                  readOnly
+                  readOnly 
                 />
               </div>
 
@@ -266,12 +282,19 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
                 <Input
                   placeholder="Jumlah tabung bocor"
                   name="jumlahTabungBocor"
+                  type="number"
+                  defaultValue="0" min="0" 
                 />
               </div>
 
               <div className="flex flex-col my-2">
                 <Label className="font-bold text-xs my-2">Isi Kurang</Label>
-                <Input placeholder="Isi kurang" name="isiKurang" />
+                <Input 
+                  placeholder="Isi kurang" 
+                  name="isiKurang"
+                  defaultValue="0" min="0" 
+                  type="number"
+                />
               </div>
             </div>
 
@@ -288,37 +311,63 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
         <div>
           <form className="grid mx-6" action={handleSubmitAgents}>
             <div className="flex flex-col my-2 mt-6">
-              <Label className="font-bold text-xs rounded-md my-2">Nama</Label>
-              <Input placeholder="Nama" name="agentName" />
-            </div>
-
-            <div className="flex flex-col my-2">
-              <Label className="font-bold text-xs rounded-md my-2">
-                Alamat
+              <Label className="font-bold text-xs rounded-md my-2">Nama <span className="text-red-500 text-[16px]"> *</span>
               </Label>
-              <Input placeholder="Alamat" name="address" />
-            </div>
-
-            <div className="flex flex-col my-2">
-              <Label className="font-bold text-xs rounded-md my-2">Kota</Label>
-              <Input placeholder="Kota" name="city" />
+              <Input placeholder="Nama" name="agentName" required/>
             </div>
 
             <div className="flex flex-col my-2">
               <Label className="font-bold text-xs rounded-md my-2">
-                Nomor Telepon
+                Alamat <span className="text-red-500 text-[16px]"> *</span>
               </Label>
-              <Input placeholder="Nomor telepon" name="phone" />
+              <Input placeholder="Alamat" name="address" required/>
             </div>
 
             <div className="flex flex-col my-2">
-              <Label className="font-bold text-xs rounded-md my-2">Fax</Label>
-              <Input placeholder="Fax" name="fax" />
+              <Label className="font-bold text-xs rounded-md my-2">Kota <span className="text-red-500 text-[16px]"> *</span>
+              </Label>
+              <Input placeholder="Kota" name="city" required/>
             </div>
 
             <div className="flex flex-col my-2">
               <Label className="font-bold text-xs rounded-md my-2">
-                Perusahaan Asal
+                Nomor Telepon <span className="text-red-500 text-[16px]"> *</span>
+              </Label>
+              <Input placeholder="Nomor telepon" 
+                name="phone" 
+                type="number" 
+                value={phone}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 12) {
+                    setPhone(value);
+                  }
+                }}
+                className={noSpinner}
+                min={0}
+              required/>
+            </div>
+
+            <div className="flex flex-col my-2">
+              <Label className="font-bold text-xs rounded-md my-2">Fax 
+              </Label>
+              <Input placeholder="Fax" 
+                name="fax" 
+                type="number" 
+                value={fax}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 15) {
+                    setFax(value);
+                  }
+                }}
+                min={0}
+                className={noSpinner}/>
+            </div>
+
+            <div className="flex flex-col my-2">
+              <Label className="font-bold text-xs rounded-md my-2">
+                Perusahaan Asal <span className="text-red-500 text-[16px]"> *</span>
               </Label>
               <Select name="companyName" onValueChange={handleCompanySelect}>
                 <SelectTrigger className="outline-none">
@@ -348,18 +397,30 @@ const Form = ({ page, data, companyName, bpe }: Props) => {
         <div>
           <form className="grid mx-6 my-2" action={handleSubmitCompany}>
             <div className="flex flex-col mt-6">
-              <Label className="font-bold text-s my-2">Nama Perusahaan</Label>
-              <Input placeholder="Nama perusahaan" name="companyName" />
+              <Label className="font-bold text-s my-2">Nama Perusahaan <span className="text-red-500 text-[16px]"> *</span></Label>
+              <Input placeholder="Nama perusahaan" name="companyName" required/>
             </div>
 
             <div className="flex flex-col my-2">
-              <Label className="font-bold text-s my-2">Alamat</Label>
-              <Input placeholder="Alamat" name="address" />
+              <Label className="font-bold text-s my-2">Alamat <span className="text-red-500 text-[16px]"> *</span></Label>
+              <Input placeholder="Alamat" name="address" required/>
             </div>
 
             <div className="flex flex-col my-2">
-              <Label className="font-bold text-s my-2">Nomor Telepon</Label>
-              <Input placeholder="Nomor telepon" name="telephone" />
+              <Label className="font-bold text-s my-2">Nomor Telepon <span className="text-red-500 text-[16px]"> *</span></Label>
+              <Input placeholder="Nomor telepon" 
+                name="telephone" 
+                type="number" 
+                value={phone}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 15) {
+                    setPhone(value);
+                  }
+                }}
+                min={0}
+                className={noSpinner} 
+                required/>
             </div>
 
             <div className="flex justify-end m-11">

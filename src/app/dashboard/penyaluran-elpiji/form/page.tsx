@@ -22,8 +22,8 @@ const FormLpgPage = async ({
   const query = searchParams?.query || "";
   const data = await searchDeliveryNumber(query);
   const bpe = await getNextNumber();
-  const dataUser = await getCurrentSession();
-  if (!dataUser.session && !dataUser.user) {
+  const { session, user } = await getCurrentSession();
+  if (!session && !user) {
     redirect("/auth/login");
   }
 
@@ -32,7 +32,9 @@ const FormLpgPage = async ({
       home={"dashboard"}
       mainpage={"penyaluran-elpiji"}
       childpage={"form"}
-      children={<Form page={"distribution"} data={data} bpe={bpe} />}
+      children={
+        <Form page={"distribution"} data={data} bpe={bpe} user={user} />
+      }
     />
   );
 };

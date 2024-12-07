@@ -6,20 +6,17 @@ import { revalidatePath } from "next/cache";
 import { getCompaniesAll } from "./companies.action";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "./auth.actions";
+import { cache } from "react";
 
-export const getAgentsAll = async () => {
+export const getAgentsAll = cache(async () => {
   const companiesData = await getCompaniesAll();
   if (!companiesData) {
     redirect("/master-data/companies/form");
   }
-  try {
-    return await prisma.agents.findMany({
-      distinct: ["agentName"],
-    });
-  } catch (error) {
-    throw error;
-  }
-};
+  return prisma.agents.findMany({
+    distinct: ["agentName"],
+  });
+});
 
 export const postAgentData = async (formData: FormData) => {
   const agentName = formData.get("agentName")?.toString();
