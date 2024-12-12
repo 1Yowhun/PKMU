@@ -9,6 +9,7 @@ import { SidebarToggle } from "./SidebarToggle";
 import { Button } from "../ui/button";
 import { Menu } from "./Menu";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Sidebar({}) {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -24,28 +25,27 @@ export default function Sidebar({}) {
   };
 
   useEffect(() => {
-      if (pathname === "/dashboard/alokasi-harian") {
-        setSelectedKeys(['2']);
-      } else if (pathname === "/dashboard/penyaluran-elpiji") {
-        setSelectedKeys(['3']);
-      } else if (pathname === "/dashboard/alokasi-bulanan") {
-        setSelectedKeys(['4']);
-      } else if (pathname === "/dashboard/cetak-penyaluran") {
-        setSelectedKeys(['5']);
-      } else if (pathname === "/master-data/agents") {
-        setSelectedKeys(['6']);
-      } else if (pathname === "/master-data/companies") {
-        setSelectedKeys(['7']);
-      } else if (pathname === "/register") {
-        updateSelectedKey("8");
-      } 
-      else if (pathname === "/summary") {
-        updateSelectedKey("9");
-      } 
-      // TODO
-      // if (userRole === "admin" && pathname === "/register") {
-      //   updateSelectedKey("8");
-      // }
+    if (pathname === "/dashboard/alokasi-harian") {
+      setSelectedKeys(["2"]);
+    } else if (pathname === "/dashboard/penyaluran-elpiji") {
+      setSelectedKeys(["3"]);
+    } else if (pathname === "/dashboard/alokasi-bulanan") {
+      setSelectedKeys(["4"]);
+    } else if (pathname === "/dashboard/cetak-penyaluran") {
+      setSelectedKeys(["5"]);
+    } else if (pathname === "/master-data/agents") {
+      setSelectedKeys(["6"]);
+    } else if (pathname === "/master-data/companies") {
+      setSelectedKeys(["7"]);
+    } else if (pathname === "/register") {
+      updateSelectedKey("8");
+    } else if (pathname === "/summary") {
+      updateSelectedKey("9");
+    }
+    // TODO
+    // if (userRole === "admin" && pathname === "/register") {
+    //   updateSelectedKey("8");
+    // }
   }, [pathname]);
 
   return (
@@ -66,7 +66,10 @@ export default function Sidebar({}) {
           variant="link"
           asChild
         >
-          <Link href="/dashboard/alokasi-harian" className="flex items-center gap-2">
+          <Link
+            href="/dashboard/alokasi-harian"
+            className="flex items-center gap-2"
+          >
             <h1
               className={cn(
                 "font-bold text-lg whitespace-nowrap transition-[transform,opacity,display] ease-in-out duration-500",
@@ -75,7 +78,7 @@ export default function Sidebar({}) {
                   : "translate-x-0 opacity-100"
               )}
             >
-              PKWU
+              <Image src="/icon.svg" width={100} height={100} alt="ini icon" />
             </h1>
           </Link>
         </Button>

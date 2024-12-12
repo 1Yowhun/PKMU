@@ -19,6 +19,7 @@ import { formatDateTime } from "@/utils/page";
 import { getCurrentSession } from "@/app/actions/auth.actions";
 import CetakPlastikWrap from "@/components/FeatureComponents/CetakDistribusi/CetakPlastikWrap";
 import { formatDate } from "date-fns";
+import ConfirmCetak from "@/components/FeatureComponents/CetakDistribusi/ConfirmCetak";
 
 export const lpgDistributionColumns: ColumnDef<LpgDistributions>[] = [
   {
@@ -27,43 +28,9 @@ export const lpgDistributionColumns: ColumnDef<LpgDistributions>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex space-x-1">
-          <Button
-            variant="outline"
-            asChild
-            className="text-center align-center justify-center w-1"
-            aria-hidden="false"
-          >
-            <PDFDownloadLink
-              className="text-center"
-              document={<CetakPenyaluran data={row.original} />}
-              fileName={`Penyaluran Elpiji ${row.original.deliveryNumber}.pdf`}
-              aria-label={`Download Penyaluran Elpiji PDF for delivery number ${row.original.deliveryNumber}`}
-            >
-              <Printer
-                className="h-4 w-4 text-center align-center cursor-pointer"
-                style={{ color: "blue" }}
-                aria-hidden="true" 
-              />
-            </PDFDownloadLink>
-          </Button>
+          <ConfirmCetak row={row.original} type={"print"}/>
           <EditFormLpg row={row.original} />
-          <Button
-            variant="outline"
-            asChild
-            className="text-center align-center justify-center w-1"
-          >
-            <PDFDownloadLink
-              className="text-center"
-              document={<CetakPlastikWrap data={row.original} />}
-              fileName={`Plastik Wrap ${row.original.deliveryNumber}.pdf`}
-              aria-label={`Download Plastik Wrap PDF for delivery number ${row.original.deliveryNumber}`}
-            >
-              <PackageOpen
-                className="h-4 w-4 text-center align-center text-green-500 cursor-pointer"
-                aria-hidden="true" 
-              />
-            </PDFDownloadLink>
-          </Button>
+          <ConfirmCetak row={row.original} type={"wrap"}/>
         </div>
       );
     },

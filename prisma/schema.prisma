@@ -129,6 +129,9 @@ model LpgDistributions {
   allocatedQty    Int
   driverName      String
   distributionQty Int
+  gateKeeper      String?
+  superVisor      String?
+  administrasi    String?
   volume          Int
   bocor           Int?
   isiKurang       Int?

@@ -107,40 +107,73 @@ export const uploadBulkExcel = async (
   }
 };
 
-export const uploadExcelMonthly = async (data: MonthlyAllocation) => {
-  try {
-    const excelMonthly = await prisma.monthlyAllocations.create({
-      data: {
-        date: data.date,
-        totalElpiji: data.totalElpiji,
-        volume: data.volume,
-        updatedBy: data.updatedBy,
-        createdBy: data.createdBy,
-      },
-    });
-    return { success: true, data: excelMonthly };
-  } catch (error) {
-    return {
-      error: "Terjadi masalah saat upload excel",
-    };
-  }
-};
-
 export const uploadBulkExcelMonthly = async (datas: MonthlyAllocation[]) => {
   try {
-    for (const excel of datas) {
-      if (!excel.date || !excel.totalElpiji || !excel.volume) {
-        return {
-          error:
-            "Terdapat data yang kosong. Pastikan semua data memiliki nilai.",
-        };
-      }
+    // Guard clause untuk memastikan tidak ada data yang kosong
+    const isValid = datas.every(
+      (excel) => excel.date && excel.totalElpiji && excel.volume
+    );
+    if (!isValid) {
+      return {
+        error: "Terdapat data yang kosong. Pastikan semua data memiliki nilai.",
+      };
     }
-    await Promise.all(datas.map((excel) => uploadExcelMonthly(excel)));
+
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth(); // 0-11
+    const currentYear = currentDate.getFullYear(); // 2024
+
+    // Ambil bulan dan tahun dari data yang masuk
+    const isIncorrectMonthOrYear = datas.some((excel) => {
+      const dataMonth = new Date(excel.date).getMonth();
+      const dataYear = new Date(excel.date).getFullYear();
+      return dataMonth !== currentMonth || dataYear !== currentYear;
+    });
+
+    if (isIncorrectMonthOrYear) {
+      return {
+        error: `Data harus sesuai dengan bulan dan tahun saat ini. Pastikan semua data memiliki bulan dan tahun yang sesuai dengan ${
+          currentMonth + 1
+        }-${currentYear}.`,
+      };
+    }
+
+    await Promise.all(
+      datas.map(async (excel) => {
+        // Periksa apakah data untuk bulan ini sudah ada
+        const existingAllocation = await prisma.monthlyAllocations.findFirst({
+          where: {
+            date: excel.date,
+          },
+        });
+
+        if (existingAllocation) {
+          // Jika data sudah ada, lakukan update
+          await prisma.monthlyAllocations.update({
+            where: { id: existingAllocation.id }, // Menggunakan ID unik
+            data: {
+              totalElpiji: excel.totalElpiji,
+              volume: excel.volume,
+              updatedBy: excel.updatedBy,
+            },
+          });
+        } else {
+          // Jika data belum ada, lakukan create
+          await prisma.monthlyAllocations.create({
+            data: {
+              date: excel.date,
+              totalElpiji: excel.totalElpiji,
+              volume: excel.volume,
+              updatedBy: excel.updatedBy,
+              createdBy: excel.createdBy,
+            },
+          });
+        }
+      })
+    );
+
     revalidatePath("/dashboard/alokasi-harian-bulanan");
   } catch (error) {
-    return {
-      error: "Terjadi masalah saat upload excel",
-    };
+    return { error: "Terjadi masalah saat upload excel" };
   }
 };

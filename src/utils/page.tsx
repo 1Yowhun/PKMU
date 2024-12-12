@@ -37,30 +37,36 @@ export const generateColor = (index: number) => {
     return pastelColorPalette[index % pastelColorPalette.length];  
 };
 
-export const formatNumberQty = (num: number): string => {
-    return num.toLocaleString('id-ID'); 
-};
+// ============================== CALCULATE QTY ==============================
 export const calculateTotalQty = (items: any[], property: string): number => {
     return items.reduce((sum, item) => {
-      const value = item[property] !== null && item[property] !== undefined ? item[property] : 0;
-      
-      // Check if value is an object
-      if (typeof value === "object") {
+        const value = item[property] !== null && item[property] !== undefined ? item[property] : 0;
+        
+        // Check if value is an object
+        if (typeof value === "object") {
         // console.log("Object found:", value);
-        return sum; 
-      }
-      
-      return sum + value;
+            return sum; 
+        }
+        
+            return sum + value;
     }, 0);
-  };
+};
 
 export const calculateSummaryQty = (items: any[], propertyPath: string): number => {
     return items.reduce((sum, item) => {
       // Access nested properties safely
-      const value = propertyPath.split('.').reduce((acc, key) => acc && acc[key], item) ?? 0;
-      return sum + (typeof value === 'number' ? value : 0); 
+        const value = propertyPath.split('.').reduce((acc, key) => acc && acc[key], item) ?? 0;
+        return sum + (typeof value === 'number' ? value : 0); 
     }, 0);
 };
+
+export const calculateDiff = (a: number, b: number) =>{
+    let result = 0;
+    if(a > b){
+        result = a - b;
+    }
+    return result
+}
 
 export const calculateMontlyQty = (items: any) => {
     return items.reduce((sum: any, item: { totalElpiji: any; }) => sum + item.totalElpiji, 0);
@@ -68,33 +74,6 @@ export const calculateMontlyQty = (items: any) => {
 
 export const calculateTotalAgen = (data: { agentName: string }[]) => {
     return new Set(data.map((item) => item.agentName)).size;
-};
-
-export const formatDateTime = (date:any) => {
-    return date
-        ? `${date.toLocaleDateString("id-ID", {
-            weekday: "long",
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-        })}, ${date.toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-        })}`
-        : "-"; 
-};
-
-export const normalizeDateFrom = (date: Date) => {
-    const normalized = new Date(date);
-    normalized.setHours(0, 0, 0, 0);
-    return normalized;
-};
-
-export const normalizeDateTo = (date: Date) => {
-    const normalized = new Date(date);
-    normalized.setHours(23, 59, 59, 999);
-    return normalized;
 };
 
 export const getAnnualTotalQty = (data: any[]) => {
@@ -177,7 +156,38 @@ export const getWeeklyTotalQty = (data: any[]) => {
     return Array.from(accumulatedData, ([date, qty]) => ({ date, qty }));
 };
 
-// Setting the data to output date, and qty for chart
+// ============================== FORMATS ==============================
+export const formatNumberQty = (num: number): string => {
+    return num.toLocaleString('id-ID'); 
+};
+
+export const formatDateTime = (date:any) => {
+    return date
+        ? `${date.toLocaleDateString("id-ID", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+        })}, ${date.toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        })}`
+        : "-"; 
+};
+
+export const normalizeDateFrom = (date: Date) => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+};
+
+export const normalizeDateTo = (date: Date) => {
+    const normalized = new Date(date);
+    normalized.setHours(23, 59, 59, 999);
+    return normalized;
+};
+
 export const setConfigData = (data: any[], mapping: { [key: string]: string }) => {
     return data.map((item) => {
       const result: { [key: string]: any } = {};

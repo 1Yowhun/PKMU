@@ -61,6 +61,9 @@ export const postLpgData = async (formData: FormData) => {
     ? Number(formData.get("isiKurang"))
     : null;
   const shipTo = formData.get("shipTo")?.toString() || "";
+  const superVisor = formData.get("superVisor")?.toString() || "";
+  const administrasi = formData.get("administrasi")?.toString() || "";
+  const gateKeeper = formData.get("gateKeeper")?.toString() || "";
 
   if (
     !nomorTransaksi ||
@@ -110,6 +113,9 @@ export const postLpgData = async (formData: FormData) => {
         shipTo: shipTo,
         isiKurang: isiKurang || null,
         bocor: jumlahTabungBocor || null,
+        superVisor: superVisor || null,
+        administrasi: administrasi || null,
+        gateKeeper: gateKeeper || null,
         createdBy: user.id,
         updatedBy: user.id,
       },
@@ -155,6 +161,9 @@ export const UpdateLpgData = async (formData: FormData) => {
     formData.get("jumlahTabungBocor") as string
   );
   const isiKurang = parseInt(formData.get("isiKurang") as string);
+  const superVisor = formData.get("superVisor")?.toString() || "";
+  const administrasi = formData.get("administrasi")?.toString() || "";
+  const gateKeeper = formData.get("gateKeeper")?.toString() || "";
   if (!id) {
     return {
       error: "ID is missing.",
@@ -171,6 +180,9 @@ export const UpdateLpgData = async (formData: FormData) => {
         licensePlate: platKendaraan,
         driverName: namaSopir,
         bocor: jumlahTabungBocor,
+        superVisor: superVisor,
+        administrasi: administrasi,
+        gateKeeper: gateKeeper,
         isiKurang: isiKurang,
       },
     });

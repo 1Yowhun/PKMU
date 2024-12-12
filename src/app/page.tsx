@@ -6,7 +6,7 @@ const page = async () => {
   if (!dataUser.session && !dataUser.user) {
     redirect("/auth/login");
   } else {
-    redirect("/dashboard/penyaluran-elpiji");
+    redirect("/dashboard/summary");
   }
 };
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { CalendarCheck, Database, Handshake, Plus, Printer, Search, SearchX, Weight } from "lucide-react";
+import { CalendarCheck, Database, Handshake, Plus, Printer, SearchX, Weight } from "lucide-react";
 import {
   calculateTotalAgen,
   calculateTotalQty,
@@ -12,18 +12,13 @@ import {
   normalizeDateTo,
 } from "@/utils/page";
 import { format } from "date-fns";
-import { getMonthlyAllocation } from "@/app/actions/alokasi.action";
+import { getMonthlyAllocation, getSummary } from "@/app/actions/alokasi.action";
 import { ChartConfig } from "@/components/ui/chart";
-import { ChartComponent } from "@/components/FeatureComponents/Chart";
 import RekapPenyaluran from "@/components/FeatureComponents/CetakDistribusi/RekapPenyaluran";
 import ComboBox from "@/components/FeatureComponents/ComboBox";
 import { DatePickerWithRange } from "@/components/FeatureComponents/DateRange";
 import {
   Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { PDFDownloadLink } from "@react-pdf/renderer";
@@ -32,19 +27,6 @@ import { Button } from "@/components/ui/button";
 import type { User } from "@prisma/client";
 import { id } from "date-fns/locale";
 import { LpgDistributions } from "@/lib/types";
-
-interface Records {
-  bpeNumber: String;
-  giDate: Date;
-  agentName: String;
-  licensePlate: String;
-  allocatedQty: number;
-  driverName: String;
-  distributionQty: number;
-  volume: number;
-  deliveryNumbr: string;
-  status: string;
-}
 
 interface DistributionProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -67,11 +49,13 @@ const PenyaluranElpiji = <
   user,
 }: DistributionProps<TData, TValue>) => {
   const [notrans, setnotrans] = useState("");
+  const [isAgentFiltered, setIsAgentFiltered] = useState(false);
   const [agentName, setAgentName] = useState("");
   const [doNumber, setDoNumber] = useState("");
   const [dateFilter, setDateFilter] = useState<any>("today");
   const [filteredData, setFilteredData] = useState<TData[]>(data);
   const [filtered, setFiltered] = useState<Boolean>(false);
+  const [allocationDaily, setAllocationDaily] = useState<any[]>([]);
   const [allocationMonthly, setAllocationMonthly] = useState<any[]>([]);
 
   const notransOptions = Array.from(
@@ -123,29 +107,31 @@ const PenyaluranElpiji = <
     setFilteredData(filtered);
   }, [notrans, agentName, doNumber, dateFilter, data]);
 
+  useEffect(() => {
+    setIsAgentFiltered(!!agentName);
+  }, [agentName]);
+
   const getMonthly = async () => {
     const data = await getMonthlyAllocation();
     const monthlyData = data.map((item) => ({
       giDate: item.date,
       allocatedQty: item.totalElpiji,
     }));
-    console.log(monthlyData);
     setAllocationMonthly(monthlyData);
   };
 
-  const chartConfig = {
-    monthlyQty: {
-      label: "Bulanan",
-      color: "hsl(var(--chart-1))",
-    },
-    dailyQty: {
-      label: "Harian",
-      color: "hsl(var(--chart-2))",
-    },
-  } satisfies ChartConfig;
+  const getAllocattion = async () =>{
+    const { data }  = await getSummary();
+    const dailyData = data.map((item: any) => ({
+      giDate: item.plannedGiDate,
+      qty: item.allocatedQty,
+    }));
+    setAllocationDaily(dailyData)
+  }
 
   useEffect(() => {
     getMonthly();
+    getAllocattion()
     setFiltered(true);
     setDateFilter(today);
   }, []);
@@ -264,9 +250,9 @@ const PenyaluranElpiji = <
             </div>
           </div>
 
-          <div className="flex justify-between items-center mb-3 space-x-2">
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-3 space-y-2 sm:space-y-0 sm:space-x-2">
             {user.role === "ADMIN" && (
-              <div className="space-x-2">
+              <div className="flex space-x-2">
                 <Button variant="default" asChild>
                   <Link href="penyaluran-elpiji/form">
                     <Plus className="h-4 w-4 mr-2 cursor-pointer" />
@@ -280,6 +266,8 @@ const PenyaluranElpiji = <
                       <RekapPenyaluran
                         data={filteredData != null ? filteredData : data}
                         data2={allocationMonthly}
+                        data3={allocationDaily}
+                        isAgentFiltered={isAgentFiltered}
                       />
                     }
                     fileName={`Penyaluran Elpiji.pdf`}
@@ -291,13 +279,14 @@ const PenyaluranElpiji = <
               </div>
             )}
 
-            <div className="flex space-x-2">
-              {(notrans || doNumber || agentName || dateFilter != null) && (
-                <Button variant="default" onClick={handleClearSearch}>
-                  <SearchX className="h-4 w-4 mr-2 cursor-pointer" /> Bersihkan
-                  Pencarian
+            <div className="flex sm:flex-none sm:w-auto w-full">
+                <Button
+                  variant="default"
+                  className="w-full sm:w-auto"
+                  onClick={handleClearSearch}
+                >
+                  <SearchX className="h-4 w-4 mr-2 cursor-pointer" /> Bersihkan Pencarian
                 </Button>
-              )}
             </div>
           </div>
         </Card>

@@ -296,6 +296,33 @@ const Form = ({ page, data, companyName, bpe, user }: Props) => {
                   type="number"
                 />
               </div>
+
+              <div className="flex flex-col my-2">
+                <Label className="font-bold text-xs my-2">Supervisor</Label>
+                <Input 
+                  placeholder="Supervisor" 
+                  name="superVisor"
+                  type="text"
+                />
+              </div>
+
+              <div className="flex flex-col my-2">
+                <Label className="font-bold text-xs my-2">Gate Keeper</Label>
+                <Input 
+                  placeholder="Gate Keeper" 
+                  name="gateKeeper"
+                  type="text"
+                />
+              </div>
+
+              <div className="flex flex-col my-2">
+                <Label className="font-bold text-xs my-2">Administrasi</Label>
+                <Input 
+                  placeholder="Administrasi" 
+                  name="administrasi" 
+                  type="text"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end px-11 pb-11">

@@ -16,18 +16,27 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Pencil } from "lucide-react";
 import React, { useRef, useState } from "react";
-import {redirect} from "next/navigation";
+import { redirect } from "next/navigation";
 
 const EditFormLpg = ({ row }: any) => {
   const ref = useRef<HTMLFormElement>(null);
   const [id, setId] = useState(row.id);
   const [platKendaraan, setPlatKendaraan] = useState(row.licensePlate);
   const [namaSopir, setNamaSopir] = useState(row.driverName);
+  const [namaSupervisor, setNamaSupervisor] = useState(row.superVisor);
+  const [namaGateKeeper, setNamaGateKeeper] = useState(row.gateKeeper);
+  const [namaAdministrasi, setNamaAdministrasi] = useState(row.administrasi);
   const [jumlahTabungBocor, setJumlahTabungBocor] = useState(row.bocor);
   const [isiKurang, setIsiKurang] = useState(row.isiKurang);
 
   const handleEditAgent = async (formData: FormData) => {
-    if (!platKendaraan || !namaSopir) {
+    if (
+      !platKendaraan ||
+      !namaSopir ||
+      !namaAdministrasi ||
+      !namaGateKeeper ||
+      !namaSupervisor
+    ) {
       toast({
         title: "Gagal",
         description: "Ada field yang kosong",
@@ -61,7 +70,11 @@ const EditFormLpg = ({ row }: any) => {
           variant="outline"
           className="text-center align-center justify-center w-1"
         >
-          <Pencil className="h-4 w-4 text-center align-center cursor-pointer" style={{color:"orange"}} aria-label="Edit"/>
+          <Pencil
+            className="h-4 w-4 text-center align-center cursor-pointer"
+            style={{ color: "orange" }}
+            aria-label="Edit"
+          />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -100,6 +113,36 @@ const EditFormLpg = ({ row }: any) => {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-center">GateKeeper</Label>
+                <Input
+                  id="gateKeeper"
+                  name="gateKeeper"
+                  value={namaGateKeeper}
+                  onChange={(e) => setNamaGateKeeper(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-center">Supervisor</Label>
+                <Input
+                  id="superVisor"
+                  name="superVisor"
+                  value={namaSupervisor}
+                  onChange={(e) => setNamaSupervisor(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-center">Administrasi</Label>
+                <Input
+                  id="administrasi"
+                  name="administrasi"
+                  value={namaAdministrasi}
+                  onChange={(e) => setNamaAdministrasi(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-center">Tabung Bocor</Label>
                 <Input
                   id="jumlahTabungBocor"
@@ -107,7 +150,8 @@ const EditFormLpg = ({ row }: any) => {
                   value={jumlahTabungBocor}
                   onChange={(e) => setJumlahTabungBocor(e.target.value)}
                   className="col-span-3"
-                  defaultValue="" min="0" 
+                  defaultValue=""
+                  min="0"
                   type="number"
                 />
               </div>
@@ -119,7 +163,8 @@ const EditFormLpg = ({ row }: any) => {
                   value={isiKurang}
                   onChange={(e) => setIsiKurang(e.target.value)}
                   className="col-span-3"
-                  defaultValue="" min="0" 
+                  defaultValue=""
+                  min="0"
                   type="number"
                 />
               </div>

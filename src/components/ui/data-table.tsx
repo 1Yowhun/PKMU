@@ -131,7 +131,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
+        <div className="flex-1 text-sm text-muted-foreground invisible sm:visible">
           {table.getRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) displayed
         </div>

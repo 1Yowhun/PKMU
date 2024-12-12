@@ -1,7 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { format } from "date-fns";
-import { toNormalCase } from '@/utils/page';
+import { formatNumberQty, toNormalCase } from '@/utils/page';
 
 interface CetakPlastikWrapProps {
     data: any;
@@ -161,7 +161,7 @@ const CetakPlastikWrap: React.FC<CetakPlastikWrapProps> = ({ data }) => (
                 </View>
                 <View style={styles.tableRow}>
                     <Text style={[styles.tableCell, { flex: 1.5, textAlign: 'left' }]}>{data.deliveryNumber}</Text>
-                    <Text style={[styles.tableCell, { flex: 0.5, textAlign: 'center' }]}>{data.allocatedQty}</Text>
+                    <Text style={[styles.tableCell, { flex: 0.5, textAlign: 'center' }]}>{formatNumberQty(data.allocatedQty)}</Text>
                     <Text style={[styles.tableCell, { flex: 1, textAlign: 'center' }]}></Text>
                     <Text style={[styles.tableCell, { flex: 1.5, textAlign: 'center' }]}></Text>
                 </View>
@@ -181,7 +181,7 @@ const CetakPlastikWrap: React.FC<CetakPlastikWrapProps> = ({ data }) => (
                 {/* Total Row */}
                 <View style={styles.tableRow}>
                     <Text style={[styles.tableCell, { flex: 1.5, textAlign: 'center' }]}>Jumlah</Text>
-                    <Text style={[styles.tableCell, { flex: 0.5, textAlign: 'center' }]}>{data.allocatedQty }</Text>
+                    <Text style={[styles.tableCell, { flex: 0.5, textAlign: 'center' }]}>{formatNumberQty(data.allocatedQty) }</Text>
                     <Text style={[styles.tableCell, { flex: 1, textAlign: 'center' }]}></Text>
                     <Text style={[styles.tableCell, { flex: 1.5, textAlign: 'center' }]}></Text>
                 </View>
@@ -200,14 +200,17 @@ const CetakPlastikWrap: React.FC<CetakPlastikWrapProps> = ({ data }) => (
                 <View style={styles.signature}>
                     <Text style={{ textAlign: 'center' }}>Administrasi</Text>
                     <Text style={styles.signatureLine} />
+                    <Text style={{ textAlign: 'center' }}>{toNormalCase(data.administrasi || "")}</Text>
                 </View>
                 <View style={styles.signature}>
                     <Text style={{ textAlign: 'center' }}>Gate Keeper</Text>
                     <Text style={styles.signatureLine} />
+                    <Text style={{ textAlign: 'center' }}>{toNormalCase(data.gateKeeper || "")}</Text>
                 </View>
                 <View style={styles.signature}>
                     <Text style={{ textAlign: 'center' }}>Spv. Filling</Text>
                     <Text style={styles.signatureLine} />
+                    <Text style={{ textAlign: 'center' }}>{toNormalCase(data.superVisor || "")}</Text>
                 </View>
                 <View style={styles.signature}>
                     <Text style={{ textAlign: 'center' }}>Penerima</Text>

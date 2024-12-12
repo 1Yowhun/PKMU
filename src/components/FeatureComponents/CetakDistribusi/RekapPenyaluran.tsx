@@ -1,10 +1,13 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { format, parse } from 'date-fns';
+import { calculateDiff, formatNumberQty, getTodayTotalQty, toNormalCase } from '@/utils/page';
 
 interface RekapPenyaluranProps {
     data: any;
     data2: any;
+    data3: any;
+    isAgentFiltered: boolean;
 }
 
 const styles = StyleSheet.create({
@@ -71,10 +74,15 @@ const groupDataByDate = (data:any) => {
     }, {} as { [key: string]: any });
 };
 
-const RekapPenyaluran: React.FC<RekapPenyaluranProps> = ({ data = [], data2 = [] }) => {
+const groupFakultatif = (data: any) =>{
+    const totalQty = (Array.isArray(data) ? data : []).reduce((sum, item) => sum + (item.qty || 0), 0);
+    return totalQty;
+}
+
+const RekapPenyaluran: React.FC<RekapPenyaluranProps> = ({ data = [], data2 = [], data3 = [], isAgentFiltered}) => {
     const groupedData = groupDataByDate(data);
     const groupedData2 = groupDataByDate(data2);
-
+    const groupedData3 = groupDataByDate(data3);
     return (
         <Document>
             <Page size="A4" style={styles.page}>
@@ -96,25 +104,31 @@ const RekapPenyaluran: React.FC<RekapPenyaluranProps> = ({ data = [], data2 = []
                         const parsedDate = parse(giDate, "dd-MM-yyyy", new Date());
                         const formattedDate = format(parsedDate, "EEEE, dd MMMM yyyy");
 
-                        let dailyTotalQty = 0;
+                        let dailyTotalAllocation = 0;
+                        let dailyTotalDistribution = 0;
                         let dailyTotalPending = 0;
                         let dailyTotalFakultatif = 0;
 
                         groupedData[giDate].forEach((item: any) => {
-                            dailyTotalQty += item.allocatedQty || 0;
+                            dailyTotalDistribution += item.allocatedQty || 0;
                         });
-
                         const allocatedMonth = groupedData2[giDate];
+                        const allocatedDaily = groupedData3[giDate];
+                        dailyTotalAllocation = groupFakultatif(allocatedDaily)
+
                         if (allocatedMonth) {
                             const allocatedMonthQty = allocatedMonth.reduce((sum: number, monthItem: any) => sum + (monthItem.allocatedQty || 0), 0);
+                            // const allocatedDailyQty = allocatedDaily.reduce((sum: number, monthItem: any) => sum + (monthItem.qty || 0), 0);
+                            // allocatedDaily.reduce((sum: number, dailyItem: { qty: number; }) => sum + (dailyItem.qty || 0), 0);
+                            console.log(allocatedMonthQty, dailyTotalAllocation,)
+                            dailyTotalPending = calculateDiff(allocatedMonthQty, dailyTotalDistribution);
+                            dailyTotalFakultatif = calculateDiff(dailyTotalAllocation, allocatedMonthQty);
 
-                            const difference = allocatedMonthQty - dailyTotalQty;
-                        
-                            if (allocatedMonthQty > dailyTotalQty) {
-                                dailyTotalPending = difference;  
-                            } else if (allocatedMonthQty < dailyTotalQty) {
-                                dailyTotalFakultatif = -difference; 
-                            }
+                            // if (allocatedMonthQty > dailyTotalDistribution) {
+                            //     dailyTotalPending = difference;  
+                            // } else if (allocatedMonthQty < dailyTotalDistribution) {
+                            //     dailyTotalFakultatif = -difference; 
+                            // }
                         }
                         return (
                             <View key={giDate} style={{ marginBottom: 20 }} wrap={false}>
@@ -137,33 +151,36 @@ const RekapPenyaluran: React.FC<RekapPenyaluranProps> = ({ data = [], data2 = []
                                         <View style={styles.tableRow} key={index}>
                                             <Text style={[styles.tableCell, { flex: 2 }]}>{item.bpeNumber}</Text>
                                             <Text style={[styles.tableCell, { flex: 3, fontSize: 9 }]}>{item.agentName}</Text>
-                                            <Text style={[styles.tableCell, { flex: 1 }]}>{item.driverName}</Text>
+                                            <Text style={[styles.tableCell, { flex: 1 }]}>{toNormalCase(item.driverName)}</Text>
                                             <Text style={[styles.tableCell, { flex: 1 }]}>{item.licensePlate}</Text>
                                             <Text style={[styles.tableCell, { flex: 1.5 }]}>{item.deliveryNumber}</Text>
                                             <Text style={[styles.tableCell, { flex: 1 }]}>Refill</Text>
-                                            <Text style={[styles.tableCell, { flex: 1 }]}>{item.allocatedQty}</Text>
-                                            <Text style={[styles.tableCell, { flex: 1 }]}>{item.volume}</Text>
+                                            <Text style={[styles.tableCell, { flex: 1 }]}>{formatNumberQty(item.allocatedQty)}</Text>
+                                            <Text style={[styles.tableCell, { flex: 1 }]}>{formatNumberQty(item.volume)}</Text>
                                         </View>
                                     ))}
 
                                     {/* Summary Rows */}
                                     <View style={[styles.tableRow, styles.summaryRow]}>
                                         <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]}>Total</Text>
-                                        <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{dailyTotalQty}</Text>
-                                        <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{dailyTotalQty * 3}</Text>
+                                        <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalDistribution)}</Text>
+                                        <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalDistribution * 3)}</Text>
                                     </View>
+                                    {!isAgentFiltered && 
+                                        <>
+                                            <View style={[styles.tableRow, styles.summaryRow]}>
+                                                <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]}>Total Pending</Text>
+                                                <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalPending)}</Text>
+                                                <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalPending * 3)}</Text>
+                                            </View>
 
-                                    <View style={[styles.tableRow, styles.summaryRow]}>
-                                        <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]}>Total Pending</Text>
-                                        <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{dailyTotalPending}</Text>
-                                        <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{dailyTotalPending * 3}</Text>
-                                    </View>
-
-                                    <View style={[styles.tableRow, styles.summaryRow]}>
-                                        <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]}>Total Fakultatif</Text>
-                                        <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{dailyTotalFakultatif}</Text>
-                                        <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{dailyTotalFakultatif * 3}</Text>
-                                    </View>
+                                            <View style={[styles.tableRow, styles.summaryRow]}>
+                                                <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]}>Total Fakultatif</Text>
+                                                <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalFakultatif)}</Text>
+                                                <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalFakultatif * 3)}</Text>
+                                            </View>
+                                        </>
+                                    }
                                 </View>
                             </View>
                         );
