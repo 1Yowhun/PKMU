@@ -214,15 +214,16 @@ const Form = ({ page, data, companyName, bpe, user }: Props) => {
               </div>
 
               <div className="flex flex-col my-2">
+
                 <Label className="font-bold text-xs my-2">Status</Label>
-                <Select name="status" defaultValue="Approved">
-                  <SelectTrigger className="outline-none">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Approved">Approved</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <Input
+                    className={nonReq}
+                    placeholder="Status"
+                    name="status"
+                    value="Approved"
+                    defaultValue="Approved"
+                    readOnly 
+                />
               </div>
 
               <div className="flex flex-col my-2">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { format } from "date-fns";
 import { formatNumberQty, toNormalCase } from '@/utils/page';
 
@@ -21,9 +21,22 @@ const styles = StyleSheet.create({
         lineHeight: 1.5,
         fontFamily: 'Times-Roman',
     },
+    root: {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "flex-start",
+    },
     header: {
-        marginBottom: 20,
-        textAlign: 'left',
+        flex: 1,
+        marginRight: 16,
+    },
+    imageContainer: {
+        display: "flex",
+        justifyContent: "flex-start",
+    },
+    imageSize: {
+        width: 120,
+        height: 120,
     },
     title: {
         fontSize: 14,
@@ -107,15 +120,23 @@ const CetakPlastikWrap: React.FC<CetakPlastikWrapProps> = ({ data }) => (
     <Document>
         <Page size="A4" style={styles.page}>
             {/* Header Section */}
-            <View style={styles.header}>
-                <Text style={styles.title}>PT. Puri Kencana Merdeka Utama</Text>
-                <Text style={styles.subHeader}>
-                    STASIUN PENGISIAN DAN PENGANGKUTAN BULK ELPIJI (SPPBE)
-                </Text>
-                <Text style={styles.subHeader}>
-                    Kawasan Industri Candi Blok XI No. 8, JL Candi Raya Timur, Ngaliyan, Semarang
-                </Text>
-                <Text style={styles.subHeader}>Telp/Fax: 024-76633360 / 024-76633361</Text>
+            <View style={styles.root}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>PT. Puri Kencana Merdeka Utama</Text>
+                    <Text style={styles.subHeader}>
+                        STASIUN PENGISIAN DAN PENGANGKUTAN BULK ELPIJI (SPPBE)
+                    </Text>
+                    <Text style={styles.subHeader}>
+                        Kawasan Industri Candi Blok XI No. 8, JL Candi Raya Timur, Ngaliyan, Semarang
+                    </Text>
+                    <Text style={styles.subHeader}>Telp/Fax: 024-76633360 / 024-76633361</Text>
+                </View>
+                <View style={styles.imageContainer}>
+                    <Image
+                        style={styles.imageSize}
+                        src="https://f6oujhgi9dzrtqrk.public.blob.vercel-storage.com/SVG%20to%20PNG%20Conversion%20(1)-Xec3SuuiyCo71J4ndm3O533x0jWGTb.png"
+                    />   
+                </View>
             </View>
 
             {/* Details Section */}

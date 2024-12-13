@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChartConfig } from "@/components/ui/chart";
-import { format } from "date-fns";
+import { endOfWeek, format, startOfWeek } from "date-fns";
 import React, { useEffect, useState } from "react";
 import {
   calculateDiff,
@@ -246,7 +246,7 @@ const Summary = ({ data, monthly }: SummaryProps) => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-3 justify-between px-2">
           <SummaryItems
               icon={<CalendarCheck className="h-10 w-10 text-white" />}
-              title={`TOTAL ALOKASI HARI INI (${formatNumberQty(filteredDaily.length)})`}
+              title={`TOTAL ALOKASI HARIAN (${formatNumberQty(filteredDaily.length)})`}
               value={`${formatNumberQty(totalDailyQty)} / `}
               additionalInfo={`${formatNumberQty(totalDailyQty * 3)} Kg`}
               cs={"p-4"}
@@ -296,7 +296,8 @@ const Summary = ({ data, monthly }: SummaryProps) => {
             <CardHeader className="pb-0">
               <CardTitle>Minggu ini</CardTitle>
               <CardDescription>
-                Mingguan ({format(new Date(), "dd MMMM yyyy", { locale: id })})
+                {format(startOfWeek(new Date(), { weekStartsOn: 0 }), "dd MMMM yyyy", { locale: id })} - 
+                {format(endOfWeek(new Date(), { weekStartsOn: 0 }), "dd MMMM yyyy", { locale: id })}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-0 pl-2">
@@ -315,7 +316,7 @@ const Summary = ({ data, monthly }: SummaryProps) => {
             <CardHeader className="pb-0">
               <CardTitle>Tahun ini</CardTitle>
               <CardDescription>
-                Tahunan ({format(new Date(), "MMMM yyyy", { locale: id })})
+                {format(new Date(), "MMMM yyyy", { locale: id })}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-0 pl-2">

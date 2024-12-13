@@ -45,7 +45,6 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
   },
-
   title: {
     fontSize: 14,
     fontFamily: "Times-Bold",
