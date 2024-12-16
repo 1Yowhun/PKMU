@@ -56,33 +56,30 @@ const AlokasiBulanan = <
   return (
     <div className="w-full">
       <div className="items-center py-4 mx-4">
-        <div className="flex justify-between items-center my-3 space-x-2">
-            {user.role === "ADMIN" && (
-              <Button variant="default" asChild>
-                <Link href="alokasi-bulanan/upload">
-                  <Upload className="h-4 w-4 mr-2 cursor-pointer" />
-                  Upload Alokasi Bulanan
-                </Link>
-              </Button>
-            )}
-            {/* <div className="flex space-x-2 items-center"> */}
-              <MonthPicker
-                  currentMonth={currentMonth!}
-                  onMonthChange={(newMonth) => setCurrentMonth(newMonth)}
-                  placeholder={
-                    currentMonth
-                      ? format(currentMonth, "MMMM yyyy", { locale: id })
-                      : "Semua Bulan"
-                  }
-                />
-                {/* {currentMonth && (
-                  <Button variant="default" onClick={handleClearSearch}>
-                    <SearchX className="h-4 w-4 mr-2 cursor-pointer" />
-                    Bersihkan Pencarian
-                  </Button>
-                )} */}
-            {/* </div> */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center my-3 space-y-2 md:space-y-0 md:space-x-2">
+          {user.role === "ADMIN" && (
+            <Button variant="default" asChild className="w-full md:w-auto">
+              <Link href="alokasi-bulanan/upload" className="flex items-center">
+                <Upload className="h-4 w-4 mr-2 cursor-pointer" />
+                <span className="truncate">Upload Alokasi Bulanan</span>
+              </Link>
+            </Button>
+          )}
+
+          {/* MonthPicker with Responsive Behavior */}
+          <div className="w-full md:w-auto">
+            <MonthPicker
+              currentMonth={currentMonth!}
+              onMonthChange={(newMonth) => setCurrentMonth(newMonth)}
+              placeholder={
+                currentMonth
+                  ? format(currentMonth, "MMMM yyyy", { locale: id })
+                  : "Semua Bulan"
+              }
+            />
+          </div>
         </div>
+
         
         {/* Summary Cards */}
         <div className="pt-2 grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-3 mb-4">

@@ -245,19 +245,30 @@ const AlokasiHarian = <
             </div>
           </div>
 
-          <div className="flex justify-between items-center mb-3 space-x-2">
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-3 space-y-2 sm:space-y-0 sm:space-x-2">
             {user.role === "ADMIN" && (
-              <Button variant="default" asChild>
-                <Link href="alokasi-harian/upload">
-                  <Upload className="h-4 w-4 mr-2 cursor-pointer" />
-                  Upload Alokasi
-                </Link>
-              </Button>
+              <div className="w-full sm:w-auto">
+                <Button
+                  variant="default"
+                  className="w-full sm:w-auto flex items-center justify-center"
+                  asChild
+                >
+                  <Link href="alokasi-harian/upload">
+                    <Upload className="h-4 w-4 mr-2 cursor-pointer" />
+                    <span className="truncate">Upload Alokasi</span>
+                  </Link>
+                </Button>
+              </div>
             )}
-            <div className="flex space-x-2">
-              <Button variant="default" onClick={handleClearSearch}>
-                <SearchX className="h-4 w-4 mr-2 cursor-pointer" /> Bersihkan
-                Pencarian
+
+            <div className="w-full sm:w-auto">
+              <Button
+                variant="default"
+                className="w-full sm:w-auto flex items-center justify-center"
+                onClick={handleClearSearch}
+              >
+                <SearchX className="h-4 w-4 mr-2 cursor-pointer" />
+                <span className="truncate">Bersihkan Pencarian</span>
               </Button>
             </div>
           </div>

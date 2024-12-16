@@ -19,7 +19,7 @@ const Companies = <TData, TValue>({
   return (
     <div className="w-full">
       <div className=" items-center py-4 mx-4">
-        {user.role === "ADMIN" && (
+        {/* {user.role === "ADMIN" && (
           <div className="justify-start mb-1">
             <Button variant="default" className="ml-auto justify-start" asChild>
               <Link href="companies/form">
@@ -28,7 +28,7 @@ const Companies = <TData, TValue>({
               </Link>
             </Button>
           </div>
-        )}
+        )} */}
         <DataTable columns={columns} data={data} />
       </div>
     </div>

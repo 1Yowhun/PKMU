@@ -158,25 +158,34 @@ const Summary = ({ data, monthly }: SummaryProps) => {
           <h1 className="text-xl md:text-2xl font-bold">Ringkasan Eksekutif</h1>
         </div>
 
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 ml-auto">
-          <DatePickerWithRange
-            value={dateFilter}
-            onDateChange={setDateFilter}
-            placeholder={
-              dateFilter?.from && dateFilter?.to
-                ? `${format(dateFilter.from, "dd MMMM yyyy", { locale: id })} - ${format(
-                    dateFilter.to,
-                    "dd MMMM yyyy",
-                    { locale: id }
-                  )}`
-                : "Semua Tanggal"
-                // : format(new Date(), "dd MMMM yyyy", { locale: id })
-            }
-          />
-          <Button variant="default" onClick={handleClearSearch} className="w-full md:w-auto">
-            <SearchX className="h-5 w-5 mr-2 cursor-pointer" /> Bersihkan Pencarian
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 ml-auto self-center w-full sm:w-auto">
+          <div className="w-full sm:w-auto">
+            <DatePickerWithRange
+              value={dateFilter}
+              onDateChange={setDateFilter}
+              placeholder={
+                dateFilter?.from && dateFilter?.to
+                  ? `${format(dateFilter.from, "dd MMMM yyyy", { locale: id })} - ${format(
+                      dateFilter.to,
+                      "dd MMMM yyyy",
+                      { locale: id }
+                    )}`
+                  : "Semua Tanggal"
+              }
+              className="w-full sm:w-auto"
+            />
+          </div>
+
+          <Button
+            variant="default"
+            onClick={handleClearSearch}
+            className="w-full sm:w-auto flex items-center justify-center"
+          >
+            <SearchX className="h-5 w-5 mr-2 cursor-pointer" />
+            <span className="truncate">Bersihkan Pencarian</span>
           </Button>
         </div>
+
       </div>
 
         {/* TODAY */}

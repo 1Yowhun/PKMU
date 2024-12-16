@@ -59,10 +59,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover
                         id="date"
                         variant={"outline"}
                         className={cn(
-                            "w-full sm:w-[300] justify-start text-left font-normal my-2"
+                            "w-full sm:w-[300] font-normal my-2 sm:text-center"
                         )}
                     >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <CalendarIcon className="mr-2 h-4 w-4 justify-start text-left" />
                             <span>{placeholder}</span>
                     </Button>
                 </PopoverTrigger>

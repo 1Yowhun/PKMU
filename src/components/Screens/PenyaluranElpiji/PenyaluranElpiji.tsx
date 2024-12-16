@@ -252,14 +252,23 @@ const PenyaluranElpiji = <
 
           <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-3 space-y-2 sm:space-y-0 sm:space-x-2">
             {user.role === "ADMIN" && (
-              <div className="flex space-x-2">
-                <Button variant="default" asChild>
+              <div className="flex flex-col sm:flex-row sm:space-x-2 w-full sm:w-auto space-y-2 sm:space-y-0">
+                <Button
+                  variant="default"
+                  className="w-full sm:w-auto flex items-center justify-center"
+                  asChild
+                >
                   <Link href="penyaluran-elpiji/form">
                     <Plus className="h-4 w-4 mr-2 cursor-pointer" />
-                    New Penyaluran Elpiji
+                    <span className="truncate">New Penyaluran Elpiji</span>
                   </Link>
                 </Button>
-                <Button variant="default" asChild>
+
+                <Button
+                  variant="default"
+                  className="w-full sm:w-auto flex items-center justify-center"
+                  asChild
+                >
                   <PDFDownloadLink
                     className="text-center"
                     document={
@@ -273,20 +282,22 @@ const PenyaluranElpiji = <
                     fileName={`Penyaluran Elpiji.pdf`}
                   >
                     <Printer className="h-4 w-4 text-green-500 cursor-pointer mr-2" />
-                    <span>Cetak Rekap</span>
+                    <span className="truncate">Cetak Rekap</span>
                   </PDFDownloadLink>
                 </Button>
               </div>
             )}
 
-            <div className="flex sm:flex-none sm:w-auto w-full">
-                <Button
-                  variant="default"
-                  className="w-full sm:w-auto"
-                  onClick={handleClearSearch}
-                >
-                  <SearchX className="h-4 w-4 mr-2 cursor-pointer" /> Bersihkan Pencarian
-                </Button>
+            {/* Bersihkan Pencarian Button */}
+            <div className="w-full sm:w-auto">
+              <Button
+                variant="default"
+                className="w-full sm:w-auto flex items-center justify-center"
+                onClick={handleClearSearch}
+              >
+                <SearchX className="h-4 w-4 mr-2 cursor-pointer" />
+                <span className="truncate">Bersihkan Pencarian</span>
+              </Button>
             </div>
           </div>
         </Card>
