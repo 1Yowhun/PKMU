@@ -150,7 +150,11 @@ const ConfirmCetak = ({ row, type }: any) => {
                                     ? <CetakPlastikWrap data={row} />
                                     : <CetakPenyaluran data={row} />
                             }
-                            fileName={`Penyaluran Elpiji ${row.deliveryNumber}.pdf`}
+                            fileName={
+                                type === 'wrap' 
+                                ? `Plastik Wrap ${row.deliveryNumber}.pdf`
+                                : `Penyaluran Elpiji ${row.deliveryNumber}.pdf`
+                            }
                             aria-label={`Download Penyaluran Elpiji PDF for delivery number ${row.deliveryNumber}`}
                         >
                             {type === 'wrap' ?

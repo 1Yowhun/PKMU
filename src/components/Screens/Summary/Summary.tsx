@@ -12,6 +12,7 @@ import { ChartConfig } from "@/components/ui/chart";
 import { endOfWeek, format, startOfWeek } from "date-fns";
 import React, { useEffect, useState } from "react";
 import {
+  calcSummary,
   calculateDiff,
   calculateSummaryQty,
   formatNumberQty,
@@ -22,7 +23,7 @@ import {
   normalizeDateTo,
 } from "@/utils/page";
 import { id } from "date-fns/locale";
-import { CalendarCheck, CalendarDays, Clock4, PackagePlus, ScrollText, SearchX } from "lucide-react";
+import { CalendarCheck, CalendarDays, CalendarX2, Clock4, PackagePlus, ScrollText, SearchX } from "lucide-react";
 import { DatePickerWithRange } from "@/components/FeatureComponents/DateRange";
 import { Button } from "@/components/ui/button";
 import SummaryItems from "@/components/FeatureComponents/SummaryItems";
@@ -145,7 +146,7 @@ const Summary = ({ data, monthly }: SummaryProps) => {
       color: "hsl(var(--chart-2))",
     },
     distributionQty: {
-      label: "Penyaluran Elpiji",
+      label: "Penyaluran LPG",
       color: "hsl(var(--chart-3))",
     },
   } satisfies ChartConfig;
@@ -153,39 +154,38 @@ const Summary = ({ data, monthly }: SummaryProps) => {
   return (
     <div className="py-6 mx-6">
       <div className="mb-4">
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 my-4">
-        <div className="pl-2">
-          <h1 className="text-xl md:text-2xl font-bold">Ringkasan Eksekutif</h1>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 ml-auto self-center w-full sm:w-auto">
-          <div className="w-full sm:w-auto">
-            <DatePickerWithRange
-              value={dateFilter}
-              onDateChange={setDateFilter}
-              placeholder={
-                dateFilter?.from && dateFilter?.to
-                  ? `${format(dateFilter.from, "dd MMMM yyyy", { locale: id })} - ${format(
-                      dateFilter.to,
-                      "dd MMMM yyyy",
-                      { locale: id }
-                    )}`
-                  : "Semua Tanggal"
-              }
-              className="w-full sm:w-auto"
-            />
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 my-4">
+          <div className="pl-2">
+            <h1 className="text-xl md:text-2xl font-bold">Ringkasan Eksekutif</h1>
           </div>
 
-          <Button
-            variant="default"
-            onClick={handleClearSearch}
-            className="w-full sm:w-auto flex items-center justify-center"
-          >
-            <SearchX className="h-5 w-5 mr-2 cursor-pointer" />
-            <span className="truncate">Bersihkan Pencarian</span>
-          </Button>
-        </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 ml-auto self-center w-full sm:w-auto">
+            <div className="w-full sm:w-auto">
+              <DatePickerWithRange
+                value={dateFilter}
+                onDateChange={setDateFilter}
+                placeholder={
+                  dateFilter?.from && dateFilter?.to
+                    ? `${format(dateFilter.from, "dd MMMM yyyy", { locale: id })} - ${format(
+                        dateFilter.to,
+                        "dd MMMM yyyy",
+                        { locale: id }
+                      )}`
+                    : "Semua Tanggal"
+                }
+                className="w-full sm:w-auto"
+              />
+            </div>
 
+            <Button
+              variant="default"
+              onClick={handleClearSearch}
+              className="w-full sm:w-auto flex items-center justify-center"
+            >
+              <SearchX className="h-5 w-5 mr-2 cursor-pointer" />
+              <span className="truncate">Bersihkan Pencarian</span>
+            </Button>
+          </div>
       </div>
 
         {/* TODAY */}
@@ -196,39 +196,46 @@ const Summary = ({ data, monthly }: SummaryProps) => {
             </span>
           </h1>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-3 justify-between px-2">
-          <SummaryItems
+            <SummaryItems
               icon={<CalendarCheck className="h-10 w-10 text-white" />}
-              title={`TOTAL ALOKASI HARIAN`}
+              title={`ALOKASI HARIAN`}
               value={`${formatNumberQty(getTodayTotalQty(dailyAllocation))} / `}
               additionalInfo={`${formatNumberQty(getTodayTotalQty(dailyAllocation) * 3)} Kg`}
             />
             
             <SummaryItems
               icon={<CalendarDays className="h-10 w-10 text-white" />}
-              title={`TOTAL ALOKASI BULANAN`}
+              title={`ALOKASI BULANAN`}
               value={`${formatNumberQty(getTodayTotalQty(monthlyAllocation))} / `}
               additionalInfo={`${formatNumberQty(getTodayTotalQty(monthlyAllocation) * 3)} Kg`}
             />
               
             <SummaryItems
               icon={<ScrollText className="h-10 w-10 text-white" />}
-              title={`TOTAL PENYALURAN LPG`}
+              title={`PENYALURAN LPG`}
               value={`${formatNumberQty(getTodayTotalQty(dailyDistribution))} / `}
               additionalInfo={`${formatNumberQty(getTodayTotalQty(dailyDistribution) * 3)} Kg`}
             />
             
             <SummaryItems
               icon={<Clock4 className="h-10 w-10 text-white" />}
-              title={"TOTAL PENDING HARIAN"}
-              value={`${formatNumberQty(calculateDiff(getTodayTotalQty(dailyAllocation), getTodayTotalQty(dailyDistribution)))} / `}
-              additionalInfo={`${formatNumberQty(calculateDiff(getTodayTotalQty(dailyAllocation), getTodayTotalQty(dailyDistribution)) * 3)} Kg`}
+              title={"PENDING HARIAN"}
+              value={`${formatNumberQty(calcSummary(dailyAllocation, dailyDistribution))} / `}
+              additionalInfo={`${formatNumberQty(calcSummary(dailyAllocation, dailyDistribution) * 3)} Kg`}
             />
             
             <SummaryItems
               icon={<PackagePlus className="h-10 w-10 text-white" />}
-              title={"TOTAL FAKULTATIF"}
-              value={`${formatNumberQty(calculateDiff(getTodayTotalQty(dailyAllocation), getTodayTotalQty(monthlyAllocation)))} / `}
-              additionalInfo={`${formatNumberQty(calculateDiff(getTodayTotalQty(dailyAllocation), getTodayTotalQty(monthlyAllocation)) * 3)} Kg`}
+              title={"FAKULTATIF"}
+              value={`${formatNumberQty(calcSummary(dailyAllocation, monthlyAllocation))} / `}
+              additionalInfo={`${formatNumberQty(calcSummary(dailyAllocation, monthlyAllocation) * 3)} Kg`}
+            />
+
+            <SummaryItems
+              icon={<CalendarX2 className="h-10 w-10 text-white" />}
+              title={"ALOKASI TIDAK DITEBUS"}
+              value={`${formatNumberQty(calcSummary(monthlyAllocation, dailyAllocation))} / `}
+              additionalInfo={`${formatNumberQty(calcSummary(monthlyAllocation, dailyAllocation) * 3)} Kg`}
             />
           </div>
         </Card>
@@ -292,6 +299,14 @@ const Summary = ({ data, monthly }: SummaryProps) => {
               additionalInfo={`${formatNumberQty(calculateDiff(totalDailyQty, totalMonthlyQty) * 3)} Kg`}
               cs={"p-4"}
             />
+
+            <SummaryItems
+              icon={<CalendarX2 className="h-10 w-10 text-white" />}
+              title={"TOTAL ALOKASI TIDAK DITEBUS"}
+              value={`${formatNumberQty(calculateDiff(totalMonthlyQty, totalDailyQty))} / `}
+              additionalInfo={`${formatNumberQty(calculateDiff(totalMonthlyQty, totalDailyQty) * 3)} Kg`}
+              cs={"p-4"}
+            />
           </div>
         </Card>
       </div>
@@ -316,7 +331,7 @@ const Summary = ({ data, monthly }: SummaryProps) => {
                 data3={getWeeklyTotalQty(dailyDistribution)}
                 config={chartConfig}
                 title="Tabung Elpiji"
-                timeFrame="weekdays"
+                timeFrame="weekly"
               />
             </CardContent>
           </Card>

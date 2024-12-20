@@ -38,6 +38,11 @@ export const generateColor = (index: number) => {
 };
 
 // ============================== CALCULATE QTY ==============================
+
+export const calcSummary = (a: any[],b: any[]) => {
+    return calculateDiff(getTodayTotalQty(a),getTodayTotalQty(b));
+}
+
 export const calculateTotalQty = (items: any[], property: string): number => {
     return items.reduce((sum, item) => {
         const value = item[property] !== null && item[property] !== undefined ? item[property] : 0;

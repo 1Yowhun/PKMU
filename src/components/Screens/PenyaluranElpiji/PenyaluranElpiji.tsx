@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { CalendarCheck, Database, Handshake, Plus, Printer, SearchX, Weight } from "lucide-react";
+import {
+  CalendarCheck,
+  Database,
+  Handshake,
+  Plus,
+  Printer,
+  SearchX,
+  Weight,
+} from "lucide-react";
 import {
   calculateTotalAgen,
   calculateTotalQty,
@@ -17,11 +25,9 @@ import { ChartConfig } from "@/components/ui/chart";
 import RekapPenyaluran from "@/components/FeatureComponents/CetakDistribusi/RekapPenyaluran";
 import ComboBox from "@/components/FeatureComponents/ComboBox";
 import { DatePickerWithRange } from "@/components/FeatureComponents/DateRange";
-import {
-  Card,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import { Label } from "@radix-ui/react-label";
 import { Button } from "@/components/ui/button";
 import type { User } from "@prisma/client";
@@ -40,10 +46,7 @@ const today = {
   to: new Date(),
 };
 
-const PenyaluranElpiji = <
-  TData extends LpgDistributions,
-  TValue
->({
+const PenyaluranElpiji = <TData extends LpgDistributions, TValue>({
   columns,
   data,
   user,
@@ -120,18 +123,18 @@ const PenyaluranElpiji = <
     setAllocationMonthly(monthlyData);
   };
 
-  const getAllocattion = async () =>{
-    const { data }  = await getSummary();
+  const getAllocattion = async () => {
+    const { data } = await getSummary();
     const dailyData = data.map((item: any) => ({
       giDate: item.plannedGiDate,
       qty: item.allocatedQty,
     }));
-    setAllocationDaily(dailyData)
-  }
+    setAllocationDaily(dailyData);
+  };
 
   useEffect(() => {
     getMonthly();
-    getAllocattion()
+    getAllocattion();
     setFiltered(true);
     setDateFilter(today);
   }, []);
@@ -155,8 +158,14 @@ const PenyaluranElpiji = <
                 <CalendarCheck className="h-10 w-10 text-white" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-gray-400 mb-1">TOTAL TABUNG</h1>
-                <p className="text-3xl font-extrabold">{formatNumberQty(calculateTotalQty(filteredData, 'distributionQty'))}</p>
+                <h1 className="text-sm font-semibold text-gray-400 mb-1">
+                  TOTAL TABUNG
+                </h1>
+                <p className="text-3xl font-extrabold">
+                  {formatNumberQty(
+                    calculateTotalQty(filteredData, "distributionQty")
+                  )}
+                </p>
               </div>
             </div>
           </Card>
@@ -166,8 +175,15 @@ const PenyaluranElpiji = <
                 <Weight className="h-10 w-10 text-white" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-gray-400 mb-1">TOTAL BERAT TABUNG</h1>
-                <p className="text-3xl font-extrabold">{formatNumberQty(calculateTotalQty(filteredData, 'distributionQty') * 3)} <span className="text-xl text-gray-600"> Kg</span></p>
+                <h1 className="text-sm font-semibold text-gray-400 mb-1">
+                  TOTAL BERAT TABUNG
+                </h1>
+                <p className="text-3xl font-extrabold">
+                  {formatNumberQty(
+                    calculateTotalQty(filteredData, "distributionQty") * 3
+                  )}{" "}
+                  <span className="text-xl text-gray-600"> Kg</span>
+                </p>
               </div>
             </div>
           </Card>
@@ -177,8 +193,12 @@ const PenyaluranElpiji = <
                 <Handshake className="h-10 w-10 text-white" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-gray-400 mb-1">TOTAL AGEN</h1>
-                <p className="text-3xl font-extrabold">{calculateTotalAgen(filteredData)}</p>
+                <h1 className="text-sm font-semibold text-gray-400 mb-1">
+                  TOTAL AGEN
+                </h1>
+                <p className="text-3xl font-extrabold">
+                  {calculateTotalAgen(filteredData)}
+                </p>
               </div>
             </div>
           </Card>
@@ -188,7 +208,9 @@ const PenyaluranElpiji = <
                 <Database className="h-10 w-10 text-white" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-gray-400 mb-1">TOTAL DISTRIBUSI LPG</h1>
+                <h1 className="text-sm font-semibold text-gray-400 mb-1">
+                  TOTAL DISTRIBUSI LPG
+                </h1>
                 <p className="text-3xl font-extrabold">{filteredData.length}</p>
               </div>
             </div>

@@ -43,7 +43,6 @@ const AlokasiBulanan = <
         );
       });
       setFilteredData(filtered);
-      console.log(filtered)
     } else {
       setFilteredData(data); 
     }

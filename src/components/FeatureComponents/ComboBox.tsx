@@ -45,7 +45,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
             <Command>
                 <CommandInput placeholder="Search..." />
                 <CommandList>
-                <CommandEmpty>No data found.</CommandEmpty>
+                <CommandEmpty>Data tidak ditemukan</CommandEmpty>
                 <CommandGroup>
                     {sortedData.map((item) => (
                     <CommandItem

@@ -23,41 +23,56 @@ const formatTime = (timestamp: number): string => {
 
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
-    fontSize: 10,
-    lineHeight: 1.5,
-    fontFamily: "Times-Roman",
+    paddingHorizontal: 30, // Padding sedikit lebih kecil agar pas di continuous form
+    paddingTop: 20,
+    fontSize: 10.5, // Ukuran font lebih kecil untuk dapat memuat lebih banyak konten
+    lineHeight: 1.3,
+    fontFamily: "Helvetica",
+    flexDirection: "column",
   },
   root: {
     display: "flex",
     flexDirection: "row",
-    alignItems: "flex-start",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 0,
+    marginBottom: 0,
+    position: "relative",
+    width: "100%",
+    height: "auto",
   },
   header: {
     flex: 1,
-    marginRight: 16,
+    marginRight: 8,
   },
   imageContainer: {
     display: "flex",
     justifyContent: "flex-start",
   },
   imageSize: {
-    width: 120,
-    height: 120,
+    position: "absolute",
+    left: 415,
+    width: 130,
+    height: 130,
+    margin: 0,
+    padding: 0,
+    objectFit: "cover",
   },
   title: {
-    fontSize: 14,
-    fontFamily: "Times-Bold",
-    fontWeight: "extrabold",
-    marginBottom: 10,
+    fontSize: 11, // Ukuran judul sedikit lebih kecil
+    fontFamily: "Helvetica-Bold",
+    fontWeight: "bold",
+    marginBottom: 3,
   },
   subHeader: {
-    fontSize: 10,
+    fontSize: 10.5, // Menyesuaikan ukuran font untuk subheader
+    lineHeight: 1.2,
+    marginBottom: 3,
   },
   detailsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginVertical: 3,
+    marginVertical: 1, // Margin vertikal lebih kecil untuk menyesuaikan space
   },
   detailsColumn: {
     flexDirection: "row",
@@ -66,14 +81,14 @@ const styles = StyleSheet.create({
   },
   detailsLabel: {
     fontWeight: "bold",
-    width: "25%",
+    width: "35%", // Lebar label sedikit diperkecil
   },
   detailsValue: {
     width: "60%",
     textAlign: "left",
   },
   table: {
-    marginTop: 10,
+    marginTop: 5,
     width: "100%",
     borderWidth: 1,
     borderColor: "#000",
@@ -82,50 +97,55 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   tableCellHeader: {
-    padding: 5,
+    padding: 2,
     fontWeight: "bold",
-    borderRightWidth: 1,
+    borderRightWidth: 1, // Border lebih tipis
     borderBottomWidth: 1,
     borderColor: "#000",
     textAlign: "center",
-    fontFamily: "Times-Bold",
+    paddingHorizontal: 3,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 10.5, // Ukuran font tabel lebih kecil
   },
   tableCell: {
-    padding: 5,
+    padding: 2,
+    paddingHorizontal: 3,
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#000",
     textAlign: "right",
+    fontSize: 10.5,
   },
   signatureRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 5,
     textAlign: "center",
   },
   signature: {
     textAlign: "center",
-    marginHorizontal: 20,
+    marginHorizontal: 8,
     flex: 1,
+    fontSize: 10.5,
   },
   signatureLine: {
-    marginTop: 75,
+    marginTop: 35, // Kurangi tinggi garis tanda tangan
     alignSelf: "center",
-    borderBottomWidth: 1,
+    borderBottomWidth: 1.5,
     borderBottomColor: "#000",
-    width: "90%",
+    width: "75%", // Lebar garis lebih kecil
+    marginBottom: 5,
   },
   footerText: {
-    fontSize: 9,
-    marginTop: 12,
+    fontSize: 8, // Ukuran font footer lebih kecil
+    marginTop: 10, // Margin footer lebih kecil
     textAlign: "left",
   },
 });
 
 const CetakPenyaluran: React.FC<CetakPenyaluranProps> = ({ data }) => (
   <Document>
-    <Page size="A4" style={styles.page}>
+    <Page size="A5" orientation="landscape" style={styles.page}>
       {/* Header Section */}
       <View style={styles.root}>
         <View style={styles.header}>
@@ -141,12 +161,10 @@ const CetakPenyaluran: React.FC<CetakPenyaluranProps> = ({ data }) => (
             Telp/Fax: 024-76633360 / 024-76633361
           </Text>
         </View>
-        <View style={styles.imageContainer}>
-          <Image
-            style={styles.imageSize}
-            src="https://f6oujhgi9dzrtqrk.public.blob.vercel-storage.com/SVG%20to%20PNG%20Conversion%20(1)-Xec3SuuiyCo71J4ndm3O533x0jWGTb.png"
-          />
-        </View>
+        <Image
+          style={styles.imageSize}
+          src="https://f6oujhgi9dzrtqrk.public.blob.vercel-storage.com/Free%20Image%20Resizer%20(1)-YQCDyEAV27TnvcdTfyQQQ0u7JcTZ2y.png"
+        />
       </View>
 
       {/* Details Section */}
@@ -154,7 +172,7 @@ const CetakPenyaluran: React.FC<CetakPenyaluranProps> = ({ data }) => (
       <View style={styles.detailsRow}>
         <View style={styles.detailsColumn}>
           <Text style={styles.detailsLabel}>Jenis Barang</Text>
-          <Text style={styles.detailsValue}>: Elpiji 3 Kg</Text>
+          <Text style={styles.detailsValue}>: ELPIJI 3 Kg</Text>
         </View>
         <View style={styles.detailsColumn}>
           <Text style={styles.detailsLabel}>Nomor</Text>
@@ -247,12 +265,12 @@ const CetakPenyaluran: React.FC<CetakPenyaluranProps> = ({ data }) => (
       </View>
 
       {/* Note Section */}
-      <View style={{ marginTop: 10 }}>
+      <View style={{ marginTop: 3, fontSize: 10 }}>
         <Text>
           Telah diserahkan dan diterima dalam keadaan baik, jumlah tabung dan
           isi benar
         </Text>
-        <Text style={{ textAlign: "right", marginTop: 10 }}>
+        <Text style={{ textAlign: "right", marginTop: 4 }}>
           Semarang, {format(new Date(), "dd MMMM yyyy")}
         </Text>
       </View>
