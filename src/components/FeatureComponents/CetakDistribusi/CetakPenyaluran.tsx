@@ -163,7 +163,8 @@ const CetakPenyaluran: React.FC<CetakPenyaluranProps> = ({ data }) => (
         </View>
         <Image
           style={styles.imageSize}
-          src="https://f6oujhgi9dzrtqrk.public.blob.vercel-storage.com/Free%20Image%20Resizer%20(1)-YQCDyEAV27TnvcdTfyQQQ0u7JcTZ2y.png"
+          src="
+          https://f6oujhgi9dzrtqrk.public.blob.vercel-storage.com/SVG%20to%20PNG%20Conversion%20(1)-Xec3SuuiyCo71J4ndm3O533x0jWGTb.png"
         />
       </View>
 
