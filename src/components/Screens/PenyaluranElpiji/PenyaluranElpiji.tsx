@@ -301,7 +301,7 @@ const PenyaluranElpiji = <TData extends LpgDistributions, TValue>({
                         isAgentFiltered={isAgentFiltered}
                       />
                     }
-                    fileName={`Penyaluran Elpiji.pdf`}
+                    fileName={`Rekap Penyaluran Elpiji.pdf`}
                   >
                     <Printer className="h-4 w-4 text-green-500 cursor-pointer mr-2" />
                     <span className="truncate">Cetak Rekap</span>

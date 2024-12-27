@@ -34,7 +34,9 @@ const styles = StyleSheet.create({
     table: {
         marginTop: 10,
         width: '100%',
-        borderWidth: 1,
+        // borderWidth: 1,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
         borderColor: '#000',
     },
     tableRow: {
@@ -44,7 +46,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         padding: 5,
         fontWeight: 'bold',
-        borderRightWidth: 1,
+        // borderRightWidth: 1,
         borderBottomWidth: 1,
         borderColor: '#000',
         textAlign: 'center',
@@ -52,7 +54,7 @@ const styles = StyleSheet.create({
     },
     tableCell: {
         padding: 5,
-        borderRightWidth: 1,
+        // borderRightWidth: 1,
         borderBottomWidth: 1,
         borderColor: '#000',
         textAlign: 'center',
@@ -63,16 +65,37 @@ const styles = StyleSheet.create({
     },
 });
 
-const groupDataByDate = (data:any) => {
+const groupDataByDate = (data: any) => {
     if (!Array.isArray(data)) return {};
-    
-    return data.reduce((acc, record) => {
+
+    const grouped = data.reduce((acc, record) => {
         const date = format(new Date(record.giDate), "dd-MM-yyyy");
         if (!acc[date]) acc[date] = [];
         acc[date].push(record);
         return acc;
-    }, {} as { [key: string]: any });
+    }, {} as { [key: string]: any[] });
+
+    // Sort keys by date
+    const sortedGrouped = Object.keys(grouped)
+        .sort((a, b) => {
+            const dateA = parse(a, "dd-MM-yyyy", new Date());
+            const dateB = parse(b, "dd-MM-yyyy", new Date());
+            return dateA.getTime() - dateB.getTime();
+        })
+        .reduce((acc, key) => {
+            acc[key] = grouped[key];
+            return acc;
+        }, {} as { [key: string]: any[] });
+
+    return sortedGrouped;
 };
+
+
+// return Array.from(map.values()).sort((a, b) => {
+//     const dateA = new Date(a.date.split("-").reverse().join("-")); 
+//     const dateB = new Date(b.date.split("-").reverse().join("-"));
+//     return dateA.getTime() - dateB.getTime();
+//   });
 
 const groupFakultatif = (data: any) =>{
     const totalQty = (Array.isArray(data) ? data : []).reduce((sum, item) => sum + (item.qty || 0), 0);
@@ -83,6 +106,7 @@ const RekapPenyaluran: React.FC<RekapPenyaluranProps> = ({ data = [], data2 = []
     const groupedData = groupDataByDate(data);
     const groupedData2 = groupDataByDate(data2);
     const groupedData3 = groupDataByDate(data3);
+    let TOTAL = 0;
     return (
         <Document>
             <Page size="A4" style={styles.page}>
@@ -108,6 +132,7 @@ const RekapPenyaluran: React.FC<RekapPenyaluranProps> = ({ data = [], data2 = []
                         let dailyTotalDistribution = 0;
                         let dailyTotalPending = 0;
                         let dailyTotalFakultatif = 0;
+                        let totalLO = 0;
 
                         groupedData[giDate].forEach((item: any) => {
                             dailyTotalDistribution += item.allocatedQty || 0;
@@ -115,15 +140,15 @@ const RekapPenyaluran: React.FC<RekapPenyaluranProps> = ({ data = [], data2 = []
                         const allocatedMonth = groupedData2[giDate];
                         const allocatedDaily = groupedData3[giDate];
                         dailyTotalAllocation = groupFakultatif(allocatedDaily)
+                        TOTAL = TOTAL + dailyTotalDistribution
 
                         if (allocatedMonth) {
                             const allocatedMonthQty = allocatedMonth.reduce((sum: number, monthItem: any) => sum + (monthItem.allocatedQty || 0), 0);
                             // const allocatedDailyQty = allocatedDaily.reduce((sum: number, monthItem: any) => sum + (monthItem.qty || 0), 0);
                             // allocatedDaily.reduce((sum: number, dailyItem: { qty: number; }) => sum + (dailyItem.qty || 0), 0);
-                            console.log(allocatedMonthQty, dailyTotalAllocation,)
-                            dailyTotalPending = calculateDiff(allocatedMonthQty, dailyTotalDistribution);
+                            dailyTotalPending = calculateDiff(dailyTotalAllocation, dailyTotalDistribution);
                             dailyTotalFakultatif = calculateDiff(dailyTotalAllocation, allocatedMonthQty);
-
+                            totalLO = calculateDiff(allocatedMonthQty, dailyTotalAllocation)
                             // if (allocatedMonthQty > dailyTotalDistribution) {
                             //     dailyTotalPending = difference;  
                             // } else if (allocatedMonthQty < dailyTotalDistribution) {
@@ -131,12 +156,12 @@ const RekapPenyaluran: React.FC<RekapPenyaluranProps> = ({ data = [], data2 = []
                             // }
                         }
                         return (
-                            <View key={giDate} style={{ marginBottom: 20 }} wrap={false}>
+                            <View key={giDate} style={{ marginVertical: 20 }}>
                                 <Text style={{ marginTop: 5 }}>Penyaluran Tanggal: <Text style={{ fontFamily: "Times-Bold" }}>{formattedDate}</Text></Text>
                                 <View style={styles.table}>
                                     {/* Table Header */}
-                                    <View style={styles.tableRow}>
-                                        <Text style={[styles.tableCellHeader, { flex: 2 }]}>No Transaksi</Text>
+                                    <View style={styles.tableRow} wrap={false}>
+                                        <Text style={[styles.tableCellHeader, { flex: 1.5 }]}>No Transaksi</Text>
                                         <Text style={[styles.tableCellHeader, { flex: 3 }]}>Nama Agen</Text>
                                         <Text style={[styles.tableCellHeader, { flex: 1 }]}>Sopir</Text>
                                         <Text style={[styles.tableCellHeader, { flex: 1 }]}>Nopol</Text>
@@ -148,46 +173,66 @@ const RekapPenyaluran: React.FC<RekapPenyaluranProps> = ({ data = [], data2 = []
 
                                     {/* Table Rows */}
                                     {groupedData[giDate].map((item: any, index: number) => (
-                                        <View style={styles.tableRow} key={index}>
-                                            <Text style={[styles.tableCell, { flex: 2 }]}>{item.bpeNumber}</Text>
-                                            <Text style={[styles.tableCell, { flex: 3, fontSize: 9 }]}>{item.agentName}</Text>
-                                            <Text style={[styles.tableCell, { flex: 1 }]}>{toNormalCase(item.driverName)}</Text>
-                                            <Text style={[styles.tableCell, { flex: 1 }]}>{item.licensePlate}</Text>
-                                            <Text style={[styles.tableCell, { flex: 1.5 }]}>{item.deliveryNumber}</Text>
-                                            <Text style={[styles.tableCell, { flex: 1 }]}>Refill</Text>
-                                            <Text style={[styles.tableCell, { flex: 1 }]}>{formatNumberQty(item.allocatedQty)}</Text>
-                                            <Text style={[styles.tableCell, { flex: 1 }]}>{formatNumberQty(item.volume)}</Text>
+                                        <View style={styles.tableRow} wrap={false} key={index}>
+                                            <Text style={[styles.tableCell, { flex: 1.5 }]} wrap={false}>{item.bpeNumber}</Text>
+                                            <Text style={[styles.tableCell, { flex: 3, fontSize: 9 }]} wrap={false}>{item.agentName}</Text>
+                                            <Text style={[styles.tableCell, { flex: 1, fontSize: 9 }]} wrap={false}>{toNormalCase(item.driverName)}</Text>
+                                            <Text style={[styles.tableCell, { flex: 1, fontSize: 9 }]} wrap={false}>{item.licensePlate}</Text>
+                                            <Text style={[styles.tableCell, { flex: 1.5 }]} wrap={false}>{item.deliveryNumber}</Text>
+                                            <Text style={[styles.tableCell, { flex: 1 }]} wrap={false}>Refill</Text>
+                                            <Text style={[styles.tableCell, { flex: 1 }]} wrap={false}>{formatNumberQty(item.allocatedQty)}</Text>
+                                            <Text style={[styles.tableCell, { flex: 1 }]} wrap={false}>{formatNumberQty(item.volume)}</Text>
                                         </View>
                                     ))}
 
                                     {/* Summary Rows */}
-                                    <View style={[styles.tableRow, styles.summaryRow]}>
-                                        <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]}>Total</Text>
-                                        <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalDistribution)}</Text>
-                                        <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalDistribution * 3)}</Text>
-                                    </View>
-                                    {!isAgentFiltered && 
-                                        <>
-                                            <View style={[styles.tableRow, styles.summaryRow]}>
-                                                <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]}>Total Pending</Text>
-                                                <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalPending)}</Text>
-                                                <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalPending * 3)}</Text>
-                                            </View>
+                                    <View wrap={false}>
+                                        <View style={[styles.tableRow, styles.summaryRow]} wrap={false}>
+                                            <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]} wrap={false}>Sub Total</Text>
+                                            <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]} wrap={false}>{formatNumberQty(dailyTotalDistribution)}</Text>
+                                            <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]} wrap={false}>{formatNumberQty(dailyTotalDistribution * 3)}</Text>
+                                        </View>
+                                        {!isAgentFiltered && 
+                                            <>
+                                                <View style={[styles.tableRow, styles.summaryRow]} wrap={false}>
+                                                    <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]} wrap={false}>Total Pending</Text>
+                                                    <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]} wrap={false}>{formatNumberQty(dailyTotalPending)}</Text>
+                                                    <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]} wrap={false}>{formatNumberQty(dailyTotalPending * 3)}</Text>
+                                                </View>
 
-                                            <View style={[styles.tableRow, styles.summaryRow]}>
-                                                <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]}>Total Fakultatif</Text>
-                                                <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalFakultatif)}</Text>
-                                                <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{formatNumberQty(dailyTotalFakultatif * 3)}</Text>
-                                            </View>
-                                        </>
-                                    }
+                                                <View style={[styles.tableRow, styles.summaryRow]} wrap={false}>
+                                                    <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]} wrap={false}>Total Fakultatif</Text>
+                                                    <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]} wrap={false}>{formatNumberQty(dailyTotalFakultatif)}</Text>
+                                                    <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]} wrap={false}>{formatNumberQty(dailyTotalFakultatif * 3)}</Text>
+                                                </View>
+
+                                                <View style={[styles.tableRow, styles.summaryRow]} wrap={false}>
+                                                    <Text style={[styles.tableCell, { flex: 11, fontWeight: 'bold', textAlign: "left", fontFamily: "Times-Bold" }]} wrap={false}>Total LO Tidak Ditebus</Text>
+                                                    <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]} wrap={false}>{formatNumberQty(totalLO)}</Text>
+                                                    <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]} wrap={false}>{formatNumberQty(totalLO * 3)}</Text>
+                                                </View>
+                                            </>
+                                        }
+                                    </View>
                                 </View>
                             </View>
                         );
                     })
                 ) : (
-                    <Text style={{ textAlign: 'center', marginTop: 20 }}>No Data Available</Text>
+                    <Text style={{ textAlign: 'center', marginTop: 20 }}>Data tidak ditemukan</Text>
                 )}
+                    <View style={[styles.table, {marginTop:20}]}>
+                        <View style={styles.tableRow} wrap={false}>
+                            <Text style={[styles.tableCellHeader, { flex: 1.5 }]}>Alokasi</Text>
+                            <Text style={[styles.tableCellHeader, { flex: 1 }]}>Jumlah</Text>
+                            <Text style={[styles.tableCellHeader, { flex: 1 }]}>Kg</Text>
+                        </View>
+                        <View style={[styles.tableRow, styles.summaryRow]} wrap={false}>
+                            <Text style={[styles.tableCellHeader, { flex: 1.5 }]}>TOTAL</Text>
+                            <Text style={[styles.tableCell, { flex: 1 }]} wrap={false}>{formatNumberQty(TOTAL)}</Text>
+                            <Text style={[styles.tableCell, { flex: 1 }]} wrap={false}>{formatNumberQty(TOTAL * 3)}</Text>
+                        </View>
+                    </View>
             </Page>
         </Document>
     );
