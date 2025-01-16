@@ -10,12 +10,12 @@ import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import ComboBox from '@/components/FeatureComponents/ComboBox'
 
-interface AgentsProps<TData, TValue> {
+interface AgentsProps<TData extends { agentName: string }, TValue> {
   data: TData[];
   user: User;
 }
 
-const Rekapan = <TData, TValue>({
+const Rekapan = <TData extends { agentName: string }, TValue>({
   data,
   user,
 }: AgentsProps<TData, TValue>) => {
