@@ -41,6 +41,8 @@ export default function Sidebar({}) {
       updateSelectedKey("8");
     } else if (pathname === "/summary") {
       updateSelectedKey("9");
+    } else if (pathname === "/dashboard/Rekap") {
+      updateSelectedKey("10");
     }
     // TODO
     // if (userRole === "admin" && pathname === "/register") {

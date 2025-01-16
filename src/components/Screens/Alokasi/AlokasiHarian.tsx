@@ -28,6 +28,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Allocation } from "@/lib/types";
 
+
 interface AlokasiProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -47,33 +48,30 @@ const AlokasiHarian = <
   data,
   user,
 }: AlokasiProps<TData, TValue>) => {
-  const [status, setStatus] = useState("");
+  const optionStatus = ["Pending", "Approved"];
+  const [status, setStatus] = useState("Pending");
   const [agentName, setAgentName] = useState("");
   const [doNumber, setDoNumber] = useState("");
   const [dateFilter, setDateFilter] = useState<any>("today");
   const [filteredData, setFilteredData] = useState<TData[]>(data);
   const [filtered, setFiltered] = useState<Boolean>(false);
-
-  const statusOptions = Array.from(
-    new Set(data.map((item) => item.status))
-  ).map((status) => ({
-    label: status,
-    value: status,
+  
+  const statusOptions = optionStatus.map((item) => ({
+    label: item,
+    value: item,
   }));
 
-  const agentNameOptions = Array.from(
-    new Set(data.map((item) => item.agentName))
-  ).map((agentName) => ({
-    label: agentName,
-    value: agentName,
-  }));
+  const agentNameOptions = Array.from(new Set(data.map((item) => item.agentName)))
+    .map((agentName) => ({
+      label: agentName,
+      value: agentName,
+    }));
 
-  const doNumberOptions = Array.from(
-    new Set(data.map((item) => item.deliveryNumber))
-  ).map((deliveryNumber) => ({
-    label: deliveryNumber,
-    value: deliveryNumber,
-  }));
+  const doNumberOptions = Array.from(new Set(data.map((item) => item.deliveryNumber)))
+    .map((deliveryNumber) => ({
+      label: deliveryNumber,
+      value: deliveryNumber,
+    }));
 
   useEffect(() => {
     const filtered = data.filter((item) => {
