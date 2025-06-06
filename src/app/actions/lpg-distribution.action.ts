@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { getErrorMessage } from "./error.action";
 import { getCurrentSession } from "./auth.actions";
 import { cache } from "react";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 
 export const searchDeliveryNumber = async (query: string, user: number) => {
   try {
@@ -274,15 +276,15 @@ export const getFilterData = cache(async (company_id: number) => {
 });
 
 export const getLpgDataDefault = async (company_id: number) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const gmt7Date = new Date(now.getTime() + 7 * 60 * 60 * 1000);
 
   return await prisma.lpgDistributions.findMany({
     where: {
       AND: [
         {
           giDate: {
-            gte: today,
+            gte: gmt7Date,
           },
         },
         {

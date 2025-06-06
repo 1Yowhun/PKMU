@@ -4,15 +4,15 @@ import prisma from "@/lib/db";
 import { cache } from "react";
 
 export const getAllocationDefault = async (company_id: number) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const gmt7Date = new Date(now.getTime() + 7 * 60 * 60 * 1000);
 
   return await prisma.allocations.findMany({
     where: {
       AND: [
         {
           plannedGiDate: {
-            gte: today,
+            gte: gmt7Date,
           },
         },
         {
