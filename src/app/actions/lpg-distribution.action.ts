@@ -221,7 +221,7 @@ export const deleteLpgData = async (id: number) => {
   }
 };
 
-export const getNextNumber = async (user: string) => {
+export const getNextNumber = async (company_id: number) => {
   try {
     const date = new Date();
     const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -232,7 +232,9 @@ export const getNextNumber = async (user: string) => {
       where: {
         status: { in: ["Pending", "Approved"] },
         bpeNumber: { startsWith: prefix },
-        createdBy: user,
+        creator: {
+          companiesId: company_id,
+        },
       },
       select: { bpeNumber: true },
       orderBy: { bpeNumber: "desc" },

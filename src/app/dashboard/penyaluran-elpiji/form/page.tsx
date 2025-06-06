@@ -24,7 +24,7 @@ const FormLpgPage = async ({
   }
   const query = searchParams?.query || "";
   const data = await searchDeliveryNumber(query, user.companiesId);
-  const bpe = await getNextNumber(user.id);
+  const bpe = await getNextNumber(user.companiesId);
 
   return <DistributionForm data={data} bpe={bpe} user={user} />;
 };
