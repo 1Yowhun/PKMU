@@ -5,10 +5,14 @@ import { startOfMonth, endOfMonth, eachMonthOfInterval } from "date-fns";
 
 export const getSummaryToday = async (company_id: number) => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const jakartaTime = new Date(
+    today.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+  );
+  jakartaTime.setHours(0, 0, 0, 0);
 
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
+  const tomorrow = new Date(jakartaTime);
+  tomorrow.setDate(jakartaTime.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
 
   const [dailySummary, dailySummaryPlanned, distributionSummary, monthlyData] =
     await prisma.$transaction([
@@ -20,11 +24,11 @@ export const getSummaryToday = async (company_id: number) => {
             {
               giDate: { gte: today, lt: tomorrow },
             },
-            {           
-              creator:{
-                companiesId: company_id
-              } 
-            }
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
           ],
         },
       }),
@@ -36,11 +40,11 @@ export const getSummaryToday = async (company_id: number) => {
             {
               plannedGiDate: { gte: today, lt: tomorrow },
             },
-            {           
-              creator:{
-                companiesId: company_id
-              } 
-            }
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
           ],
         },
       }),
@@ -52,11 +56,11 @@ export const getSummaryToday = async (company_id: number) => {
             {
               giDate: { gte: today, lt: tomorrow },
             },
-            {           
-              creator:{
-                companiesId: company_id
-              } 
-            }
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
           ],
         },
       }),
@@ -66,11 +70,11 @@ export const getSummaryToday = async (company_id: number) => {
             {
               date: { gte: today, lt: tomorrow },
             },
-            {           
-              creator:{
-                companiesId: company_id
-              } 
-            }
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
           ],
         },
         select: { totalElpiji: true, volume: true },
@@ -175,11 +179,11 @@ export const getWeeklySummaryDefault = async (company_id: number) => {
             {
               plannedGiDate: { gte: startDate, lte: endDate },
             },
-            {           
-              creator:{
-                companiesId: company_id
-              } 
-            }
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
           ],
         },
         orderBy: { plannedGiDate: "asc" },
@@ -192,11 +196,11 @@ export const getWeeklySummaryDefault = async (company_id: number) => {
             {
               giDate: { gte: startDate, lte: endDate },
             },
-            {           
-              creator:{
-                companiesId: company_id
-              } 
-            }
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
           ],
         },
         orderBy: { giDate: "asc" },
@@ -207,11 +211,11 @@ export const getWeeklySummaryDefault = async (company_id: number) => {
             {
               date: { gte: startDate, lte: endDate },
             },
-            {           
-              creator:{
-                companiesId: company_id
-              } 
-            }
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
           ],
         },
         select: { totalElpiji: true, date: true },
@@ -287,11 +291,11 @@ export const getAnnualSummaryData = async (company_id: number) => {
                 {
                   giDate: { gte: startDate, lte: endDate },
                 },
-                {           
-                  creator:{
-                    companiesId: company_id
-                  } 
-                }
+                {
+                  creator: {
+                    companiesId: company_id,
+                  },
+                },
               ],
             },
             orderBy: { giDate: "asc" },
@@ -304,11 +308,11 @@ export const getAnnualSummaryData = async (company_id: number) => {
                 {
                   giDate: { gte: startDate, lte: endDate },
                 },
-                {           
-                  creator:{
-                    companiesId: company_id
-                  } 
-                }
+                {
+                  creator: {
+                    companiesId: company_id,
+                  },
+                },
               ],
             },
             orderBy: { giDate: "asc" },
@@ -319,11 +323,11 @@ export const getAnnualSummaryData = async (company_id: number) => {
                 {
                   date: { gte: startDate, lte: endDate },
                 },
-                {           
-                  creator:{
-                    companiesId: company_id
-                  } 
-                }
+                {
+                  creator: {
+                    companiesId: company_id,
+                  },
+                },
               ],
             },
             select: { totalElpiji: true, date: true },
