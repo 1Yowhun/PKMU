@@ -134,7 +134,7 @@ export const getCompaniesImage = async (id: number) => {
 
   companyImageCache.set(id, {
     data,
-    expires: now + 5 * 60 * 1000, // 5 menit
+    expires: now + 60 * 60 * 1000, 
   });
 
   return data;

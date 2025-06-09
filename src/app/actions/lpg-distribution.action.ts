@@ -277,14 +277,17 @@ export const getFilterData = cache(async (company_id: number) => {
 
 export const getLpgDataDefault = async (company_id: number) => {
   const now = new Date();
-  const gmt7Date = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  const jakartaTime = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+  );
+  jakartaTime.setHours(0, 0, 0, 0);
 
   return await prisma.lpgDistributions.findMany({
     where: {
       AND: [
         {
           giDate: {
-            gte: gmt7Date,
+            gte: jakartaTime,
           },
         },
         {

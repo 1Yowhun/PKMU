@@ -181,7 +181,7 @@ const CetakPenyaluran: React.FC<CetakPenyaluranProps> = ({
             style={
               companies?.id === 1 ? styles.imageSizePKMU : styles.imageSizeSMG
             }
-            src={companies?.imageUrl}
+            src={companies?.id === 1 ? "/assets/pkmu.png" : "/assets/smg.png"}
           />
         </View>
 
@@ -349,7 +349,7 @@ const CetakPenyaluran: React.FC<CetakPenyaluranProps> = ({
             style={
               companies?.id === 1 ? styles.imageSizePKMU : styles.imageSizeSMG
             }
-            src={companies?.imageUrl}
+            src={companies?.id === 1 ? "/assets/pkmu.png" : "/assets/smg.png"}
           />
         </View>
 

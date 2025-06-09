@@ -5,14 +5,17 @@ import { cache } from "react";
 
 export const getAllocationDefault = async (company_id: number) => {
   const now = new Date();
-  const gmt7Date = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  const jakartaTime = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+  );
+  jakartaTime.setHours(0, 0, 0, 0);
 
   return await prisma.allocations.findMany({
     where: {
       AND: [
         {
           plannedGiDate: {
-            gte: gmt7Date,
+            gte: jakartaTime,
           },
         },
         {
