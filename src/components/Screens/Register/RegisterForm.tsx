@@ -17,7 +17,6 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { redirect, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import ComboBoxNelsen from "@/components/FeatureComponents/ComboBoxNelsen";
 import { getCompaniesMetaData } from "@/app/actions/companies.action";
 import {
   Select,
@@ -57,13 +56,6 @@ const Register = ({ role }: { role?: string }) => {
     handlePrepareCompany();
   }, []);
 
-  const handleCompanySelect = (value: string) => {
-    const selectedCompany = companies?.find(
-      (company: any) => company.companyName === value
-    );
-    setSelectedCompanyId(Number(selectedCompany?.id) || 0);
-  };
-
   const handlePrepareCompany = async () => {
     const result = await getCompaniesMetaData();
     setCompanies(result);
@@ -76,7 +68,9 @@ const Register = ({ role }: { role?: string }) => {
     };
 
     setIsLoading(true);
+    console.log("Payload:", payload);
     const res = await onlyRegister(payload);
+    console.log("Response:", res);
     if (res.error) {
       setIsLoading(false);
       toast({
@@ -88,16 +82,16 @@ const Register = ({ role }: { role?: string }) => {
       setIsLoading(false);
       router.push("/dashboard/penyaluran-elpiji");
       toast({
-        title: "Register has been succesfully",
+        title: "Registrasi berhasil",
         duration: 3000,
       });
     }
   }
 
-  if (role != "ADMIN") {
+  if (role !== "ADMIN") {
     toast({
       variant: "destructive",
-      title: "Hanya admin yang bisa akses",
+      title: "Hanya admin yang bisa mengakses halaman ini",
       duration: 3000,
     });
     redirect("/dashboard/penyaluran-elpiji");
@@ -107,25 +101,25 @@ const Register = ({ role }: { role?: string }) => {
     <div className="flex w-full h-auto">
       <Card className="p-6 m-6 justify-center items-center w-full">
         <CardHeader>
-          <CardTitle>Form Registerasi User</CardTitle>
+          <CardTitle>Form Registrasi Pengguna</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form
-              className="flex flex-col gap-4"
+              className="flex flex-col gap-6"
               onSubmit={form.handleSubmit(onSubmit)}
             >
               <div className="flex flex-col gap-4">
-                <div className="flex flex-row gap-x-4">
+                <div className="flex flex-col md:flex-row gap-4">
                   <FormField
                     control={form.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>Username</FormLabel>
+                        <FormLabel>Nama Pengguna</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Enter your username..."
+                            placeholder="Masukkan nama pengguna..."
                             {...field}
                           />
                         </FormControl>
@@ -139,12 +133,12 @@ const Register = ({ role }: { role?: string }) => {
                     name="password"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel>Kata Sandi</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               type={showPassword ? "text" : "password"}
-                              placeholder="Enter your password..."
+                              placeholder="Masukkan kata sandi..."
                               {...field}
                             />
                             <button
@@ -166,65 +160,20 @@ const Register = ({ role }: { role?: string }) => {
                   />
                 </div>
 
-                {/* <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-lg">Role</FormLabel>
-                    <FormControl>
-                      <div className="max-w-lg">
-                        <ComboBoxNelsen
-                          placeholder="Pilih Status"
-                          data={roleOptions}
-                          selectedValue={field.value}
-                          onSelect={field.onChange}
-                          valueKey="value"
-                          displayKey="label"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
-
-                {/* <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-lg">Company</FormLabel>
-                    <FormControl>
-                      <div className="max-w-lg">
-                        <ComboBoxNelsen
-                          placeholder="Pilih Company"
-                          data={companyOptions}
-                          selectedValue={field.value}
-                          onSelect={field.onChange}
-                          valueKey="value"
-                          displayKey="label"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
-                <div className="flex flex-row gap-x-4">
+                <div className="flex flex-col md:flex-row gap-4">
                   <FormField
                     control={form.control}
                     name="role"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>Role</FormLabel>
+                        <FormLabel>Peran</FormLabel>
                         <FormControl>
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Pilih Role" />
+                              <SelectValue placeholder="Pilih peran" />
                             </SelectTrigger>
                             <SelectContent>
                               {roleOptions.map((role) => (
@@ -245,23 +194,26 @@ const Register = ({ role }: { role?: string }) => {
                     name="company"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>Company</FormLabel>
+                        <FormLabel>Perusahaan</FormLabel>
                         <FormControl>
                           <Select
                             onValueChange={(value) => {
                               field.onChange(value);
-                              //   handleCompanySelect(value);
+                              const selected = companies?.find(
+                                (c: any) => c.companyName === value
+                              );
+                              setSelectedCompanyId(selected?.id || 0);
                             }}
                             value={field.value}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Pilih Company" />
+                              <SelectValue placeholder="Pilih perusahaan" />
                             </SelectTrigger>
                             <SelectContent>
                               {companyOptions.map((company) => (
                                 <SelectItem
                                   key={company.value}
-                                  value={String(company.value)}
+                                  value={String(company.label)}
                                 >
                                   {company.label}
                                 </SelectItem>
@@ -275,11 +227,14 @@ const Register = ({ role }: { role?: string }) => {
                   />
                 </div>
               </div>
-              <Button type="submit" disabled={isLoading} className="self-end">
-                {isLoading && (
-                  <Loader className="mr-2 h-4 w-4 px-3 animate-spin" />
-                )}
-                Register
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="self-end w-full md:w-auto"
+              >
+                {isLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                Daftar
               </Button>
             </form>
           </Form>

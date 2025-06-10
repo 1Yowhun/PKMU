@@ -135,10 +135,19 @@ export default function DownloadComponent({
 
   return (
     <div className="w-full">
-      <div className="py-4 mx-4">
+      <div className=" mx-4">
+        <div className="flex md:flex-row items-start md:items-center gap-4 my-3">
+          <div className="pl-2">
+            <h1 className="text-xl md:text-2xl font-bold">
+              Rekap Penyaluran Elpiji
+            </h1>
+          </div>
+        </div>
         <Card className="px-6 py-6 my-3 shadow-lg rounded-2xl bg-white border border-gray-200">
           <div className="px-4 text-center">
-            <h1 className="text-lg font-semibold py-2 pb-4">Filter Rekap</h1>
+            <h1 className="text-lg font-semibold py-2 pb-4">
+              Filter Rekap Penyaluran Elpiji
+            </h1>
           </div>
           <Form {...form}>
             <form

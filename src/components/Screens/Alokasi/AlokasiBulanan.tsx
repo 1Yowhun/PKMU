@@ -89,7 +89,12 @@ const AlokasiBulanan = <TData extends MonthlyAllocation, TValue>({
   return (
     <div className="mx-5">
       <div className="mb-4">
-        {/* Summary Cards */}
+        {/* Summary Cards */}{" "}
+        <div className="flex md:flex-row items-start md:items-center gap-4 my-3">
+          <div className="pl-2">
+            <h1 className="text-xl md:text-2xl font-bold">Alokasi Bulanan </h1>
+          </div>
+        </div>
         <div className="pt-2 grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-3 mb-4">
           <InfoCard
             icon={<CalendarCheck className="h-10 w-10 text-white" />}

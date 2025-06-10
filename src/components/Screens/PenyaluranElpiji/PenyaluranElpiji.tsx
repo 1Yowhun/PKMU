@@ -202,7 +202,12 @@ export default function PenyaluranElpiji({
   return (
     <div className="mx-5">
       <div className="mb-4">
-        <div className="pt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
+        <div className="flex md:flex-row items-start md:items-center gap-4 my-3">
+          <div className="pl-2">
+            <h1 className="text-xl md:text-2xl font-bold">Penyaluran Elpiji</h1>
+          </div>
+        </div>
+        <div className="pt-2 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
           <InfoCard
             icon={<CalendarCheck className="h-10 w-10 text-white" />}
             title="TOTAL TABUNG"
@@ -227,7 +232,9 @@ export default function PenyaluranElpiji({
         </div>
         <Card className="px-6 py-6 my-3 shadow-lg rounded-2xl bg-white border border-gray-200">
           <div className="px-4 text-center">
-            <h1 className="text-lg font-semibold py-2 pb-4">Filter Rekap</h1>
+            <h1 className="text-lg font-semibold py-2 pb-4">
+              Filter Penyaluran Elpiji
+            </h1>
           </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

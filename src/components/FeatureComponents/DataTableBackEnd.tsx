@@ -88,14 +88,14 @@ export function DataTableBackEnd<TData, TValue>({
   const Pagination = () => {
     return (
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground invisible sm:visible">
-          {table.getRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) displayed
+        <div className="flex-1 text-sm text-muted-foreground">
+          Menampilkan {table.getRowModel().rows.length} dari{" "}
+          {table.getFilteredRowModel().rows.length} baris
         </div>
 
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page {table.getState().pagination.pageIndex} of{" "}
+            Halaman {table.getState().pagination.pageIndex} /{" "}
             {table.getPageCount() === 0 ? 1 : table.getPageCount()}
           </div>
 

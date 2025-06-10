@@ -17,20 +17,28 @@ const Agents = <TData, TValue>({
   user,
 }: AgentsProps<TData, TValue>) => {
   return (
-    <div className="mx-5">
+    <div className="mx-4 sm:mx-6 lg:mx-8">
       <div className="mb-4">
-        {user.role === "ADMIN" && (
-          <div className="justify-start my-4">
-            <Button variant="default" className="ml-auto justify-start" asChild>
-              <Link href="agents/form">
-                <Plus className="h-4 w-4 mr-2 cursor-pointer" />
-                New Agen
-              </Link>
-            </Button>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4">
+          <div className="pl-1">
+            <h1 className="text-xl md:text-2xl font-bold">Master Data Agen</h1>
           </div>
-        )}
 
-        <DataTable columns={columns} data={data} />
+          {user.role === "ADMIN" && (
+            <div className="w-full md:w-auto">
+              <Button variant="default" className="w-full md:w-auto" asChild>
+                <Link href="agents/form">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Agen
+                </Link>
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4">
+          <DataTable columns={columns} data={data} />
+        </div>
       </div>
     </div>
   );
