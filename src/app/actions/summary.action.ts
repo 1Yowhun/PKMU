@@ -21,7 +21,7 @@ export const getSummaryToday = async (company_id: number) => {
         where: {
           AND: [
             {
-              giDate: { gte: today, lt: tomorrow },
+              giDate: { gte: jakartaTime, lt: tomorrow },
             },
             {
               creator: {
@@ -37,7 +37,7 @@ export const getSummaryToday = async (company_id: number) => {
         where: {
           AND: [
             {
-              plannedGiDate: { gte: today, lt: tomorrow },
+              plannedGiDate: { gte: jakartaTime, lt: tomorrow },
             },
             {
               creator: {
@@ -53,7 +53,7 @@ export const getSummaryToday = async (company_id: number) => {
         where: {
           AND: [
             {
-              giDate: { gte: today, lt: tomorrow },
+              giDate: { gte: jakartaTime, lt: tomorrow },
             },
             {
               creator: {
@@ -67,7 +67,7 @@ export const getSummaryToday = async (company_id: number) => {
         where: {
           AND: [
             {
-              date: { gte: today, lt: tomorrow },
+              date: { gte: jakartaTime, lt: tomorrow },
             },
             {
               creator: {
