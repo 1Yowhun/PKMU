@@ -11,7 +11,7 @@ export const getSummaryToday = async (company_id: number) => {
   jakartaTime.setHours(0, 0, 0, 0);
 
   const tomorrow = new Date(jakartaTime);
-  tomorrow.setDate(jakartaTime.getDate() + 1);
+  tomorrow.setHours(23, 59, 59, 999);
 
   const [dailySummary, dailySummaryPlanned, distributionSummary, monthlyData] =
     await prisma.$transaction([
