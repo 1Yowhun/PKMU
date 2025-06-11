@@ -48,7 +48,7 @@ export const sidebarItems = {
       title: "Master Data",
       url: "/master-data/agents",
       icon: Database,
-      // isActive: true,
+      isActive: true,
       items: [
         {
           title: "Agen",
@@ -59,7 +59,7 @@ export const sidebarItems = {
           url: "/master-data/companies",
         },
         {
-          title: "Register",
+          title: "Registrasi",
           url: "/setting/register",
         },
       ],

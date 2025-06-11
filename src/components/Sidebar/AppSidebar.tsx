@@ -15,16 +15,23 @@ import { logOut } from "@/app/actions/auth.actions";
 import { LogoutSidebar } from "./LogoutSidebar";
 import { MainSidebar } from "./MainSidebar";
 import { SummarySidebar } from "./SummarySidebar";
-import { MasterSidebar } from "./MasterSidebar";
 import { sidebarItems } from "@/constants/sidebarItems.constant";
-import { User } from "../../../generated/prisma_client/default";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export function AppSidebar({
   user,
   image,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { user: any; image: any }) {
-  const handleClick = async () => {
+  const pathname = usePathname();
+  const [activeItem, setActiveItem] = useState<string | null>(pathname || null);
+
+  const handleClick = (url: string) => {
+    setActiveItem(url);
+  };
+
+  const handleLogout = async () => {
     const result = await logOut();
     if (result?.error) {
       toast({
@@ -51,12 +58,26 @@ export function AppSidebar({
         ) : null}
       </SidebarHeader>
       <SidebarContent>
-        <SummarySidebar items={sidebarItems.summary} />
-        <MainSidebar items={sidebarItems.dashboard} />
-        <MasterSidebar items={sidebarItems.masterData} />
+        <SummarySidebar
+          items={sidebarItems.summary}
+          activeItem={activeItem}
+          onClick={handleClick}
+        />
+        <MainSidebar
+          title={"Dashboard"}
+          items={sidebarItems.dashboard}
+          activeItem={activeItem}
+          onClick={handleClick}
+        />
+        <MainSidebar
+          title={"Master Data"}
+          items={sidebarItems.masterData}
+          activeItem={activeItem}
+          onClick={handleClick}
+        />
       </SidebarContent>
       <SidebarFooter>
-        <LogoutSidebar onLogout={handleClick} />
+        <LogoutSidebar onLogout={handleLogout} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

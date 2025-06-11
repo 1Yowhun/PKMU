@@ -101,7 +101,7 @@ const Register = ({ role }: { role?: string }) => {
     <div className="flex w-full h-auto">
       <Card className="p-6 m-6 justify-center items-center w-full">
         <CardHeader>
-          <CardTitle>Form Registrasi Pengguna</CardTitle>
+          <CardTitle className="text-xl">Form Registrasi Pengguna</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
