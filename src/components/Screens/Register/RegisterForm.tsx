@@ -99,7 +99,7 @@ const Register = ({ role }: { role?: string }) => {
 
   return (
     <div className="flex w-full h-auto">
-      <Card className="p-6 m-6 justify-center items-center w-full">
+      <Card className="p-2 m-6 justify-center items-center w-full">
         <CardHeader>
           <CardTitle className="text-xl">Form Registrasi Pengguna</CardTitle>
         </CardHeader>

@@ -137,7 +137,6 @@ const Summary = ({
 
       const data = await response.json();
 
-
       const allData = {
         allSummary: {
           _count: {
@@ -206,7 +205,7 @@ const Summary = ({
           <h1 className="text-2xl font-semibold mb-1 ">
             Wawasan Hari Ini
             <span className="text-sm m-3 font-semibold text-gray-500 mb-1">
-              ({format(new Date(), "dd MMMM yyyy")})
+              ({format(new Date(), "dd MMMM yyyy", { locale: id })})
             </span>
           </h1>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-3 justify-between">
@@ -449,7 +448,7 @@ const Summary = ({
       <div className="my-5">
         <div className="pl-2 mt-5">
           <div className="md:flex items-center justify-between mx-1 mb-4">
-            <h1 className="text-2xl font-semibold">Chart Jumlah Tabung</h1>
+            <h1 className="text-2xl font-semibold mb-4">Chart Jumlah Tabung</h1>
             <div className="flex flex-wrap gap-2 justify-center md:justify-end">
               <Button
                 onClick={() => {
