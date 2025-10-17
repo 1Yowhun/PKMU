@@ -163,10 +163,17 @@ const Summary = ({
             totalElpiji: data?.monthlyData?._sum?.totalElpiji ?? 0,
           },
         },
+        allAvgDistribution: {
+          _count: {
+            businessDays: data?.avgDistriSummary?._count?.businessDays ?? 0,
+          },
+          _sum: {
+            average: data?.avgDistriSummary?._sum?.average ?? 0,
+          },
+        },
         pending: data?.pending ?? 0,
         fakultatif: data?.fakultatif ?? 0,
         tidakTembus: data?.tidakTembus ?? 0,
-        average: data?.average ?? 0,
       };
 
       setAllDataSummary(allData);
@@ -205,7 +212,7 @@ const Summary = ({
           <h1 className="text-2xl font-semibold mb-1 ">
             Wawasan Hari Ini
             <span className="text-sm m-3 font-semibold text-gray-500 mb-1">
-              ({format(new Date(), "dd MMMM yyyy", { locale: id })})
+              ({format(new Date(), "dd MMMM yyyy")})
             </span>
           </h1>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-3 justify-between">
@@ -429,12 +436,16 @@ const Summary = ({
               icon={
                 <ChartSpline className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
               }
-              title="RATA-RATA DISTRIBUSI"
-              value={`${Number(allDataSummary.average).toLocaleString(
-                "id-ID"
-              )} / `}
+              title={`RATA-RATA DISTRIBUSI (${
+                allDataSummary?.allAvgDistribution._count.businessDays.toLocaleString(
+                  "id-ID"
+                ) || 0
+              } Hari Kerja) `}
+              value={`${Number(
+                allDataSummary?.allAvgDistribution._sum.average
+              ).toLocaleString("id-ID")} / `}
               additionalInfo={`${(
-                Number(allDataSummary.average) * 3
+                Number(allDataSummary?.allAvgDistribution._sum.average) * 3
               ).toLocaleString("id-ID")} Kg`}
               cs="p-4"
             />
@@ -448,7 +459,7 @@ const Summary = ({
       <div className="my-5">
         <div className="pl-2 mt-5">
           <div className="md:flex items-center justify-between mx-1 mb-4">
-            <h1 className="text-2xl font-semibold mb-4">Chart Jumlah Tabung</h1>
+            <h1 className="text-2xl font-semibold">Chart Jumlah Tabung</h1>
             <div className="flex flex-wrap gap-2 justify-center md:justify-end">
               <Button
                 onClick={() => {

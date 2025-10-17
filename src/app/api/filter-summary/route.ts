@@ -145,7 +145,12 @@ export async function POST(req: NextRequest) {
         ? (dailyMonthly ?? 0) - (dailyAllo ?? 0)
         : 0;
 
-    const average = ((dailyAllo ?? 0) / (totalProps || 1)).toFixed(2);
+    const average = ((dailyDistri ?? 0) / (totalProps || 1)).toFixed(2);
+
+    const avgDistriSummary = {
+      _sum: { average: average },
+      _count: { businessDays: totalProps },
+    };
 
     // Contoh response
     return NextResponse.json(
@@ -153,6 +158,7 @@ export async function POST(req: NextRequest) {
         message: "Date range received",
         dailySummary,
         distributionSummary,
+        avgDistriSummary,
         monthlyData,
         pending,
         fakultatif,

@@ -459,12 +459,20 @@ export const allDataDefault = async (company_id: number) => {
 
   // console.log(allDistributionSummary._count?._all);
 
-  const average = totalProps ? ((dailyAllo ?? 0) / totalProps).toFixed(2) : "0";
+  const average = totalProps
+    ? ((dailyDistri ?? 0) / totalProps).toFixed(2)
+    : "0";
+
+  const allAvgDistribution = {
+    _sum: { average: average },
+    _count: { businessDays: totalProps },
+  };
 
   return {
     allSummary,
     allDistributionSummary,
     allMonthlyData,
+    allAvgDistribution,
     pending,
     fakultatif,
     tidakTembus,
