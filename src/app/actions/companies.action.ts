@@ -56,7 +56,13 @@ export const postCompaniesData = async (formData: FormData) => {
 };
 
 export const updateCompaniesData = async (formData: FormData) => {
-  // const
+  const { user } = await getCurrentSession();
+  if (!user || user.role !== "ADMIN") {
+    return {
+      error: "Hanya admin yang dapat mengubah data perusahaan",
+    };
+  }
+
   const id = Number(formData.get("id"));
   const companyName = formData.get("companyName")?.toString();
   const address = formData.get("address")?.toString();
@@ -64,7 +70,7 @@ export const updateCompaniesData = async (formData: FormData) => {
 
   if (!id) {
     return {
-      error: "User tidak ada atau user belum login",
+      error: "ID perusahaan tidak valid",
     };
   }
 
@@ -88,19 +94,30 @@ export const updateCompaniesData = async (formData: FormData) => {
   }
 };
 
-export const deleteLpgData = async (id: number) => {
+export const deleteCompanyData = async (id: number) => {
+  const { user } = await getCurrentSession();
+  if (!user || user.role !== "ADMIN") {
+    return {
+      error: "Hanya admin yang dapat menghapus data perusahaan",
+    };
+  }
+
   try {
     await prisma.companies.delete({
       where: {
         id: id,
       },
     });
+    revalidatePath("/data-master/companies");
+    return { success: true };
   } catch (error) {
     return {
       error: getErrorMessage(error),
     };
   }
 };
+
+export const deleteLpgData = deleteCompanyData;
 
 export const getCompaniesMetaData = cache(async (id?: string) => {
   const metadata = await prisma.companies.findMany({

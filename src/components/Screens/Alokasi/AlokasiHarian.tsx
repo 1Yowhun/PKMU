@@ -60,9 +60,12 @@ const AlokasiHarian = ({
   defaultdata: any;
   dataBpeDeliveryAgent: dataBpeDeliveryAgent[];
 }) => {
-  const uniqueAgents = [
-    ...new Set(defaultdata.map((allocation: any) => allocation.agentName)),
-  ];
+  const uniqueAgents = useMemo(
+    () => [
+      ...new Set(defaultdata.map((allocation: any) => allocation.agentName)),
+    ],
+    [defaultdata]
+  );
 
   const totalQty = useMemo(
     () =>

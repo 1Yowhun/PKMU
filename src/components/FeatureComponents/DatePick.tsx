@@ -41,7 +41,7 @@ export function DatePick({
   const handleDateChange = (newDate: any) => {
     setDate(newDate);
     if (onDateChange) {
-      onDateChange(format(newDate, "dd MMMM yyyy", { locale: id }));
+      onDateChange(newDate);
     }
   };
 

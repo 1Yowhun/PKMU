@@ -9,11 +9,14 @@ export const metadata = {
 };
 
 const FormAgentsPage = async () => {
-  const companyName = await getCompaniesNameData();
   const { session, user } = await getCurrentSession();
-  if (!session && !user) {
+  if (!session || !user) {
     redirect("/auth/login");
   }
+  if (user.role !== "ADMIN") {
+    redirect("/master-data/agents");
+  }
+  const companyName = await getCompaniesNameData();
   return <AgentForm companyName={companyName} user={user} />;
 };
 

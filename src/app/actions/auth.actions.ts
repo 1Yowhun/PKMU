@@ -119,6 +119,14 @@ export const registerAction = async (values: SignInValues) => {
 
 export const onlyRegister = async (values: SignInValues) => {
   try {
+    const { user: currentUser } = await getCurrentSession();
+    if (!currentUser || currentUser.role !== "ADMIN") {
+      return {
+        error: "Hanya admin yang dapat mendaftarkan user baru",
+        success: false,
+      };
+    }
+
     const existingUser = await prisma.user.findUnique({
       where: {
         username: values.username,
@@ -128,15 +136,16 @@ export const onlyRegister = async (values: SignInValues) => {
       return { error: "Sudah ada username", success: false };
     }
 
-    const user = await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         username: values.username,
         password: await new Argon2id().hash(values.password),
-        role: values.role,
-        companiesId: Number(values.company),
+        role: values.role || "USER",
+        companiesId: Number(values.company || values.companyId),
       },
     });
-    return { success: true, data: user };
+    const { password, ...safeUser } = newUser;
+    return { success: true, data: safeUser };
   } catch (error) {
     return { error: "Terjadi kesalahan", success: false };
   }
@@ -149,16 +158,10 @@ export const getCurrentSession = cache(
       const token = cookieStore.get("spbe-auth-cookies")?.value ?? null;
 
       if (token === null) {
-        console.log("No token found in cookies");
         return { session: null, user: null };
       }
 
       const result = await validateSessionToken(token);
-
-      if (!result) {
-        console.log("Session token validation failed or returned null");
-      }
-
       return result;
     } catch (error) {
       console.error("Error during getCurrentSession:", error);
@@ -169,13 +172,16 @@ export const getCurrentSession = cache(
 
 export const checkUserDb = cache(async () => {
   try {
-    const checkUsername = await prisma.user.findMany();
+    // Ambil 1 record dengan select id saja untuk mengecek apakah tabel user kosong
+    // Menghindari memuat seluruh data user dan password hash ke memori server
+    const checkUsername = await prisma.user.findMany({
+      select: {
+        id: true,
+      },
+      take: 1,
+    });
 
-    if (!checkUsername || checkUsername.length === 0) {
-      console.log("No user data found in the database");
-    }
-
-    return checkUsername as User[];
+    return checkUsername as unknown as User[];
   } catch (error) {
     console.error("Error during checkUserDb:", error);
     return [];

@@ -10,7 +10,7 @@ export const metadata = {
 
 const AgentsPage = async () => {
   const { user, session } = await getCurrentSession();
-  if (!session && !user) {
+  if (!session || !user) {
     redirect("/auth/login");
   }
   const data = await getAgentsAll(user.id, user.companiesId!);

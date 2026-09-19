@@ -9,8 +9,11 @@ export const metadata = {
 
 const FormCompanyPage = async () => {
   const { session, user } = await getCurrentSession();
-  if (!session && !user) {
+  if (!session || !user) {
     redirect("/auth/login");
+  }
+  if (user.role !== "ADMIN") {
+    redirect("/master-data/companies");
   }
   return <CompanyForm user={user} />;
 };

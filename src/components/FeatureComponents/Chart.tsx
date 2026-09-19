@@ -90,40 +90,6 @@ export function ChartComponent<TData extends DataItem>({
     return <div className="text-center text-gray-500 py-4">Tidak ada Data</div>;
   }
 
-  // const combinedData = React.useMemo(() => {
-  //   const map = new Map<string, { date: string; dailyQty?: number; monthlyQty?: number; distributionQty? :number}>();
-  
-  //   // Process data as dailyQty
-  //   data.forEach(({ date, qty }) => {
-  //     if (!map.has(date)) {
-  //       map.set(date, { date, dailyQty: qty });
-  //     } else {
-  //       map.get(date)!.dailyQty = qty;
-  //     }
-  //   });
-  
-  //   // Process data2 as monthlyQty
-  //   data2.forEach(({ date, qty }) => {
-  //     if (!map.has(date)) {
-  //       map.set(date, { date, monthlyQty: qty });
-  //     } else {
-  //       map.get(date)!.monthlyQty = qty;
-  //     }
-  //   });
-
-  //   data3.forEach(({ date, qty }) => {
-  //     if (!map.has(date)) {
-  //       map.set(date, { date, distributionQty: qty });
-  //     } else {
-  //       map.get(date)!.distributionQty = qty;
-  //     }
-  //   });
-  
-  
-  //   const result = Array.from(map.values());
-  //   return result;
-  // }, [data, data2]);
-
   const formatXAxis = (tickItem: string) => {
     const date = new Date(tickItem);
     if (timeFrame === "monthly") {

@@ -1,8 +1,14 @@
 import prisma from "@/lib/db";
+import { validateRequest } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
+    const { session, user: authUser } = await validateRequest();
+    if (!session || !authUser) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const {
       company_id,
@@ -30,7 +36,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (range?.from || range?.to) {
-      let start, end;
+      let start: Date;
+      let end: Date;
 
       if (range?.from && range?.to) {
         start = new Date(range.from);
@@ -51,77 +58,71 @@ export async function POST(req: NextRequest) {
       end.setHours(23, 59, 59, 999);
 
       whereConditions.giDate = {
-        gte: new Date(start.setHours(0, 0, 0, 0)), // Set waktu awal hari
-        lte: new Date(end.setHours(23, 59, 59, 999)), // Set waktu akhir hari
+        gte: start,
+        lte: end,
       };
     }
 
-    whereConditions.creator = {
-      companiesId: company_id,
-    };
+    // Pastikan companyId berasal dari user session kecuali jika ADMIN
+    const targetCompanyId =
+      authUser.role === "ADMIN" && company_id
+        ? company_id
+        : authUser.companiesId;
 
+    whereConditions.creator = {
+      companiesId: targetCompanyId,
+    };
 
     const skip = (page - 1) * pageSize;
     const take = pageSize;
+    const effectiveWhere =
+      Object.keys(whereConditions).length > 0 ? whereConditions : undefined;
 
-    const totalQty = await prisma.lpgDistributions.aggregate({
-      where:
-        Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
-      _sum: {
-        allocatedQty: true,
-      },
-    });
-
-    // Query jumlah unique agentName langsung di database
-    const totalAgen = await prisma.lpgDistributions.groupBy({
-      by: ["agentName"],
-      where:
-        Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
-    });
+    // Jalankan semua query secara paralel tanpa duplikasi count
+    const [totalQty, totalAgen, totalCount, filteredData] = await Promise.all([
+      prisma.lpgDistributions.aggregate({
+        where: effectiveWhere,
+        _sum: {
+          allocatedQty: true,
+        },
+      }),
+      prisma.lpgDistributions.groupBy({
+        by: ["agentName"],
+        where: effectiveWhere,
+      }),
+      prisma.lpgDistributions.count({
+        where: effectiveWhere,
+      }),
+      prisma.lpgDistributions.findMany({
+        where: effectiveWhere,
+        skip,
+        take,
+        orderBy: { bpeNumber: "desc" },
+        select: {
+          id: true,
+          bpeNumber: true,
+          giDate: true,
+          agentName: true,
+          licensePlate: true,
+          deliveryNumber: true,
+          allocatedQty: true,
+          distributionQty: true,
+          driverName: true,
+          administrasi: true,
+          superVisor: true,
+          gateKeeper: true,
+          volume: true,
+          bocor: true,
+          isiKurang: true,
+          updatedAt: true,
+          createdBy: true,
+        },
+      }),
+    ]);
 
     const totalAgenCount = totalAgen.length;
-
-    // Query total alokasi harian (jumlah record)
-    const totalDistribusi = await prisma.lpgDistributions.count({
-      where:
-        Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
-    });
-
-    // Hitung total berat
+    const totalDistribusi = totalCount;
     const totalBeratQty = (totalQty._sum.allocatedQty || 0) * 3;
-
-    // Query total count untuk pagination
-    const totalCount = await prisma.lpgDistributions.count({
-      where:
-        Object.keys(whereConditions).length > 0 ? whereConditions : undefined, // Jika tidak ada filter, where akan diabaikan
-    });
-
-    const filteredData = await prisma.lpgDistributions.findMany({
-      where:
-        Object.keys(whereConditions).length > 0 ? whereConditions : undefined, // Jika tidak ada filter, where akan diabaikan
-      skip,
-      take,
-      orderBy: { bpeNumber: "desc" },
-      select: {
-        id: true,
-        bpeNumber: true,
-        giDate: true,
-        agentName: true,
-        licensePlate: true,
-        deliveryNumber: true,
-        allocatedQty: true,
-        distributionQty: true,
-        driverName: true,
-        administrasi: true,
-        superVisor: true,
-        gateKeeper: true,
-        volume: true,
-        bocor: true,
-        isiKurang: true,
-        updatedAt: true,
-        createdBy: true,
-      },
-    });
 
     return NextResponse.json(
       {

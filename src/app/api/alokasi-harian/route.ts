@@ -1,23 +1,30 @@
 import prisma from "@/lib/db";
+import { validateRequest } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const {
-    id,
-    status,
-    agentName,
-    deliveryNumber,
-    range,
-    page = 1,
-    pageSize = 15,
-  } = body;
-
   try {
+    const { session, user: authUser } = await validateRequest();
+    if (!session || !authUser) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const {
+      id,
+      status,
+      agentName,
+      deliveryNumber,
+      range,
+      page = 1,
+      pageSize = 15,
+    } = body;
+
     const whereConditions: any = {};
 
     if (range?.from || range?.to) {
-      let start, end;
+      let start: Date;
+      let end: Date;
 
       if (range?.from && range?.to) {
         start = new Date(range.from);
@@ -42,26 +49,14 @@ export async function POST(req: NextRequest) {
         gte: start,
         lte: end,
       };
-      // .OR = [
-      //   {
-      //     giDate: null,
-      //     updatedAt: {
-      //       gte: start,
-      //       lte: end,
-      //     },
-      //   },
-      //   {
-      //     giDate: {
-      //       not: null,
-      //       gte: start,
-      //       lte: end,
-      //     },
-      //   },
-      // ];
     }
 
+    // Pastikan companyId berasal dari user session kecuali jika ADMIN
+    const targetCompanyId =
+      authUser.role === "ADMIN" && id ? id : authUser.companiesId;
+
     whereConditions.creator = {
-      companiesId: id,
+      companiesId: targetCompanyId,
     };
 
     if (agentName) {
@@ -87,57 +82,48 @@ export async function POST(req: NextRequest) {
 
     const skip = (page - 1) * pageSize;
     const take = pageSize;
+    const effectiveWhere =
+      Object.keys(whereConditions).length > 0 ? whereConditions : undefined;
 
-    const totalQty = await prisma.allocations.aggregate({
-      where:
-        Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
-      _sum: {
-        allocatedQty: true,
-      },
-    });
-
-    const totalAgen = await prisma.allocations.groupBy({
-      by: ["agentName"],
-      where:
-        Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
-    });
+    // Jalankan semua query secara paralel menggunakan Promise.all tanpa duplikasi count
+    const [totalQty, totalAgen, totalCount, filteredData] = await Promise.all([
+      prisma.allocations.aggregate({
+        where: effectiveWhere,
+        _sum: {
+          allocatedQty: true,
+        },
+      }),
+      prisma.allocations.groupBy({
+        by: ["agentName"],
+        where: effectiveWhere,
+      }),
+      prisma.allocations.count({
+        where: effectiveWhere,
+      }),
+      prisma.allocations.findMany({
+        where: effectiveWhere,
+        skip,
+        take,
+        orderBy: { bpeNumber: "desc" },
+        select: {
+          id: true,
+          status: true,
+          deliveryNumber: true,
+          shipTo: true,
+          agentName: true,
+          materialName: true,
+          allocatedQty: true,
+          plannedGiDate: true,
+          giDate: true,
+          bpeNumber: true,
+          updatedAt: true,
+        },
+      }),
+    ]);
 
     const totalAgenCount = totalAgen.length;
-
-    const totalAlokasiHarian = await prisma.allocations.count({
-      where:
-        Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
-    });
-
-    // Hitung total berat
+    const totalAlokasiHarian = totalCount;
     const totalBeratQty = (totalQty._sum.allocatedQty || 0) * 3;
-
-    // Query total count untuk pagination
-    const totalCount = await prisma.allocations.count({
-      where:
-        Object.keys(whereConditions).length > 0 ? whereConditions : undefined, // Jika tidak ada filter, where akan diabaikan
-    });
-
-    const filteredData = await prisma.allocations.findMany({
-      where:
-        Object.keys(whereConditions).length > 0 ? whereConditions : undefined, // Jika tidak ada filter, where akan diabaikan
-      skip,
-      take,
-      orderBy: { bpeNumber: "desc" },
-      select: {
-        id: true,
-        status: true,
-        deliveryNumber: true,
-        shipTo: true,
-        agentName: true,
-        materialName: true,
-        allocatedQty: true,
-        plannedGiDate: true,
-        giDate: true,
-        bpeNumber: true,
-        updatedAt: true,
-      },
-    });
 
     return NextResponse.json(
       {

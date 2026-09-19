@@ -1,12 +1,7 @@
 "use client";
-import { useRef, useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { redirect, useRouter } from "next/navigation";
-import { Allocation, RawDataMap } from "@/lib/types";
-import { read, utils } from "xlsx";
-import { uploadBulkExcel } from "@/app/actions/upload-file.action";
-import { toast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -14,33 +9,32 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from "@/components/ui/table";
+import { toast } from "@/hooks/use-toast";
+import { MonthlyAllocation, RawDataMapMonthly } from "@/lib/types";
+import { uploadBulkExcelMonthly } from "@/app/actions/upload-file.action";
 import { Loader } from "lucide-react";
-import { convertStringToDate } from "@/utils/convertPlannedGiDate";
+import { useRouter } from "next/navigation";
 
-export default function UploadAlokasi({
+export default function UploadAlokasiBulanan({
   user,
 }: {
   user: {
     id: string;
     username: string;
     role: string;
-    companiesId: number;
   };
 }) {
   const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string[]>([]);
-  const [tableData, setTableData] = useState<Allocation[]>([]);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [tableData, setTableData] = useState<MonthlyAllocation[]>([]);
   const [loading, setLoading] = useState(false);
-  const [userCompany, setUserCompany] = useState(user.companiesId);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
 
-      // Validasi jenis file
       const validTypes = [
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "application/vnd.ms-excel",
@@ -67,8 +61,6 @@ export default function UploadAlokasi({
       }
 
       setSelectedFile(file);
-      setTableData([]);
-      setErrorMessage([]);
       previewExcel(file);
     }
   };
@@ -77,22 +69,27 @@ export default function UploadAlokasi({
     fileInputRef.current?.click();
   };
 
+  const excelDateToJSDate = (serial: number) => {
+    const excelStartDate = new Date(1900, 0, 1); // January 1, 1900
+    const dateInMs =
+      excelStartDate.getTime() + (serial - 1) * 24 * 60 * 60 * 1000;
+    return new Date(dateInMs);
+  };
+
   const previewExcel = (file: File) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const data = e.target?.result;
       if (data) {
+        const { read, utils } = await import("xlsx");
         const workbook = read(data, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
         const workSheet = workbook.Sheets[sheetName];
 
         const requiredColumns = [
-          "SHIP_TO",
-          "SHIP_TO_NAME",
-          "DO_NUMBER",
-          "QUANTITY",
-          "MATERIAL_NAME",
-          "PLANNED_GI_DATE",
+          "Total_Elpiji",
+          "Tanggal",
+          "Volume_Total_Elpiji",
         ];
         const sheetHeaders: any = utils.sheet_to_json(workSheet, {
           header: 1,
@@ -111,43 +108,34 @@ export default function UploadAlokasi({
           });
           return;
         }
-
         const json = utils.sheet_to_json(workSheet);
-        const uploadedData = json as RawDataMap[];
+        const uploadedData = json as RawDataMapMonthly[];
 
+        let hasInvalidRow = false;
         const transformedData = uploadedData.map((row) => {
-          if (
-            !row.SHIP_TO ||
-            !row.SHIP_TO_NAME ||
-            !row.DO_NUMBER ||
-            !row.QUANTITY ||
-            !row.MATERIAL_NAME ||
-            !row.PLANNED_GI_DATE
-          ) {
-            toast({
-              title: "Gagal",
-              description: "Data tidak valid, ada nilai yang kosong/undefiend.",
-              variant: "destructive",
-              duration: 3000,
-            });
+          if (!row.Total_Elpiji || !row.Tanggal || !row.Volume_Total_Elpiji) {
+            hasInvalidRow = true;
           }
-
-          // Transformasi data jika valid
           return {
-            shipTo: String(row.SHIP_TO),
-            agentName: String(row.SHIP_TO_NAME),
-            deliveryNumber: String(row.DO_NUMBER),
-            allocatedQty:
-              typeof row.QUANTITY === "string"
-                ? parseInt(row.QUANTITY)
-                : row.QUANTITY,
-            materialName: String(row.MATERIAL_NAME),
-            plannedGiDate: convertStringToDate(String(row.PLANNED_GI_DATE)),
-            giDate: row.giDate ? new Date(row.giDate) : null,
+            date:
+              typeof row.Tanggal === "number"
+                ? excelDateToJSDate(row.Tanggal)
+                : row.Tanggal,
+            totalElpiji: row.Total_Elpiji,
+            volume: row.Volume_Total_Elpiji,
             createdBy: user.id,
             updatedBy: user.id,
           };
         });
+
+        if (hasInvalidRow) {
+          toast({
+            title: "Peringatan Format",
+            description: "Beberapa baris data memiliki nilai yang kosong atau belum lengkap.",
+            variant: "destructive",
+            duration: 4000,
+          });
+        }
 
         setTableData(transformedData);
       }
@@ -158,35 +146,23 @@ export default function UploadAlokasi({
   const uploadExcel = async () => {
     setLoading(true);
     if (selectedFile && tableData.length > 0) {
-      const result = await uploadBulkExcel(tableData, userCompany);
-      if (result?.success) {
-        setLoading(false);
-        toast({
-          title: "Berhasil",
-          description: "Alokasi harian berhasil ditambahkan",
-          duration: 3000,
-        });
-        router.push("/dashboard/alokasi-harian/");
-      } else if (result?.error) {
+      const result = await uploadBulkExcelMonthly(tableData);
+      if (result?.error) {
         setLoading(false);
         toast({
           title: "Gagal",
-          description: result.error, // Display specific error message
+          description: result.error,
           variant: "destructive",
           duration: 3000,
         });
-      } else if (result?.missingAgents) {
-        setLoading(false);
-        setErrorMessage(result.missingAgents);
       } else {
         setLoading(false);
         toast({
-          title: "Gagal",
-          description: "Alokasi harian gagal ditambahkan",
-          variant: "destructive",
+          title: "Berhasil",
+          description: "Alokasi Bulanan berhasil ditambahkan",
           duration: 3000,
         });
-        location.reload();
+        router.push("/dashboard/alokasi-bulanan/");
       }
     } else {
       setLoading(false);
@@ -202,12 +178,11 @@ export default function UploadAlokasi({
   };
 
   if (user.role != "ADMIN") {
-    toast({
-      variant: "destructive",
-      title: "Hanya admin yang bisa akses",
-      duration: 3000,
-    });
-    redirect("/dashboard/penyaluran-elpiji");
+    return (
+      <div className="p-8 text-center text-red-500 font-semibold">
+        Hanya admin yang bisa akses halaman ini.
+      </div>
+    );
   }
 
   return (
@@ -241,7 +216,8 @@ export default function UploadAlokasi({
                 />
               </svg>
               <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                <span className="font-semibold">Click to upload</span>
+                <span className="font-semibold">Click to upload</span> or drag
+                and drop
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 .xlsx, .xls
@@ -264,12 +240,9 @@ export default function UploadAlokasi({
             value={selectedFile ? selectedFile.name : "Upload File"}
             className="text-primary"
           />
-          {/* <Button onClick={tableData.length > 0 ? uploadExcel : triggerFileInput}>
-            {tableData.length > 0 ? "Upload" : "Impor"} Data
-          </Button> */}
           <Button
             onClick={tableData.length > 0 ? uploadExcel : triggerFileInput}
-            disabled={loading} // Disable button when loading
+            disabled={loading}
           >
             {loading ? (
               <div className="flex items-center">
@@ -284,60 +257,34 @@ export default function UploadAlokasi({
         </div>
       </div>
 
-      {errorMessage.length > 0 ? (
-        // Jika ada error, tampilkan hanya pesan error
-        <div className="mt-4 text-red-600 font-semibold">
-          <p>Gagal menemukan agen berikut:</p>
-          <ul className="list-disc pl-5">
-            {/* Remove duplicates by converting to a Set, then back to an array */}
-            {Array.from(new Set(errorMessage)).map((agent, index) => (
-              <li key={index}>{agent}</li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        // Jika tidak ada error, tampilkan tabel
-        tableData.length > 0 && (
-          <div className="mt-8 w-full">
-            <h2 className="text-2xl font-semibold my-3">Pratinjau Excel</h2>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-lg">No</TableHead>
-                  <TableHead className="text-lg">Ship To</TableHead>
-                  <TableHead className="text-lg">Nama Agen</TableHead>
-                  <TableHead className="text-lg">Nomer DO</TableHead>
-                  <TableHead className="text-lg">Jumlah Tabung</TableHead>
-                  <TableHead className="text-lg">Nama Material</TableHead>
-                  <TableHead className="text-lg">Planned GI Date</TableHead>
-                  <TableHead className="text-lg">GI Date</TableHead>
+      {tableData.length > 0 && (
+        <div className="mt-8 w-full">
+          <h2 className="text-2xl font-semibold">Pratinjau Excel</h2>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-lg">Nomor</TableHead>
+                <TableHead className="text-lg">Date</TableHead>
+                <TableHead className="text-lg">Total</TableHead>
+                <TableHead className="text-lg">Volume</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tableData.map((row, index) => (
+                <TableRow key={index} className="my-6">
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>
+                    {row.date instanceof Date
+                      ? row.date.toLocaleDateString("en-GB") // "en-GB" for dd/mm/yyyy format
+                      : new Date(row.date).toLocaleDateString("en-GB")}
+                  </TableCell>
+                  <TableCell>{row.totalElpiji}</TableCell>
+                  <TableCell>{row.volume}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tableData.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="py-3">{index + 1}</TableCell>
-                    <TableCell className="py-3">{row?.shipTo}</TableCell>
-                    <TableCell className="py-3">{row?.agentName}</TableCell>
-                    <TableCell className="py-3">
-                      {row?.deliveryNumber}
-                    </TableCell>
-                    <TableCell className="py-3">{row?.allocatedQty}</TableCell>
-                    <TableCell className="py-3">{row?.materialName}</TableCell>
-                    <TableCell className="py-3">
-                      {row?.plannedGiDate
-                        ? row?.plannedGiDate.toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-                    <TableCell className="py-3">
-                      {row?.giDate ? row?.giDate.toLocaleDateString() : "-"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

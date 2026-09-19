@@ -10,13 +10,14 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { postAgentData } from "@/app/actions/agent.action";
 import { Loader2 } from "lucide-react";
 import { FormSubmit } from "@/lib/types";
 
 const AgentForm = ({ companyName, user }: FormSubmit) => {
+  const router = useRouter();
   const [selectedCompanyId, setSelectedCompanyId] = useState(0);
   const [phone, setPhone] = useState("");
   const [fax, setFax] = useState("");
@@ -36,7 +37,6 @@ const AgentForm = ({ companyName, user }: FormSubmit) => {
   const handleSubmitAgents = async (formData: FormData) => {
     setLoading(true);
     const result = await postAgentData(formData);
-    console.log(result);
     if (result?.error) {
       setLoading(false);
       toast({
@@ -53,17 +53,16 @@ const AgentForm = ({ companyName, user }: FormSubmit) => {
         description: "Agen berhasil ditambahkan",
         duration: 3000,
       });
-      redirect("/master-data/agents");
+      router.push("/master-data/agents");
     }
   };
 
-  if (user.role != "ADMIN") {
-    toast({
-      variant: "destructive",
-      title: "Hanya admin yang bisa akses",
-      duration: 3000,
-    });
-    redirect("/dashboard/penyaluran-elpiji");
+  if (user.role !== "ADMIN") {
+    return (
+      <div className="p-8 text-center text-red-500 font-semibold">
+        Hanya admin yang bisa akses halaman ini.
+      </div>
+    );
   }
 
   return (

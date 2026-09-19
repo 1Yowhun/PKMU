@@ -1,13 +1,19 @@
 import prisma from "@/lib/db";
+import { validateRequest } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
+    const { session, user: authUser } = await validateRequest();
+    if (!session || !authUser) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { company_id, agentName, deliveryNumber, range } = body;
     const whereConditions: any = {};
-    let fromDate = range.from ? new Date(range.from) : null;
-    let toDate = range.to ? new Date(range.to) : null;
+    let fromDate = range?.from ? new Date(range.from) : null;
+    let toDate = range?.to ? new Date(range.to) : null;
 
     if (agentName) {
       whereConditions.agentName = {
@@ -50,88 +56,100 @@ export async function POST(req: NextRequest) {
     }
     const dateFilter = fromDate && toDate ? { gte: fromDate, lte: toDate } : {};
 
-    const companyData = await prisma.companies.findMany({
-      where: {
-        id: company_id,
-      },
-      select: {
-        companyName: true,
-        address: true,
-        telephone: true,
-      },
-    });
-    const filteredData = await prisma.lpgDistributions.findMany({
-      where: {
-        AND: [
-          {
-            giDate: dateFilter,
-          },
-          {
-            creator: {
-              companiesId: company_id,
-            },
-          },
-        ],
-      },
-      orderBy: { bpeNumber: "desc" },
-      select: {
-        id: true,
-        bpeNumber: true,
-        agentName: true,
-        giDate: true,
-        licensePlate: true,
-        deliveryNumber: true,
-        allocatedQty: true,
-        distributionQty: true,
-        volume: true,
-        driverName: true,
-        allocationId: true,
-      },
-    });
+    // Pastikan companyId berasal dari user session kecuali jika ADMIN
+    const targetCompanyId =
+      authUser.role === "ADMIN" && company_id
+        ? company_id
+        : authUser.companiesId;
 
-    // Pastikan filteredData punya allocationId sebelum query allocation & monthly data
-    const [allocationData, monthlyData] = await prisma.$transaction([
-      prisma.allocations.findMany({
-        where: {
-          AND: [
-            {
-              plannedGiDate: dateFilter,
-            },
-            {
-              creator: {
-                companiesId: company_id,
+    // Jalankan semua query pembacaan secara paralel dengan Promise.all
+    const [company, filteredData, allocationData, monthlyData] =
+      await Promise.all([
+        prisma.companies.findUnique({
+          where: {
+            id: targetCompanyId,
+          },
+          select: {
+            companyName: true,
+            address: true,
+            telephone: true,
+          },
+        }),
+        prisma.lpgDistributions.findMany({
+          where: {
+            AND: [
+              {
+                giDate: dateFilter,
               },
-            },
-          ],
-        },
-        select: {
-          id: true,
-          materialName: true,
-          plannedGiDate: true,
-          allocatedQty: true,
-        },
-      }),
-      prisma.monthlyAllocations.findMany({
-        where: {
-          AND: [
-            {
-              date: dateFilter,
-            },
-            {
-              creator: {
-                companiesId: company_id,
+              {
+                creator: {
+                  companiesId: targetCompanyId,
+                },
               },
-            },
-          ],
-        },
-        select: {
-          date: true,
-          totalElpiji: true,
-        },
-      }),
-    ]);
+              ...(whereConditions.agentName
+                ? [{ agentName: whereConditions.agentName }]
+                : []),
+              ...(whereConditions.deliveryNumber
+                ? [{ deliveryNumber: whereConditions.deliveryNumber }]
+                : []),
+            ],
+          },
+          orderBy: { bpeNumber: "desc" },
+          select: {
+            id: true,
+            bpeNumber: true,
+            agentName: true,
+            giDate: true,
+            licensePlate: true,
+            deliveryNumber: true,
+            allocatedQty: true,
+            distributionQty: true,
+            volume: true,
+            driverName: true,
+            allocationId: true,
+          },
+        }),
+        prisma.allocations.findMany({
+          where: {
+            AND: [
+              {
+                plannedGiDate: dateFilter,
+              },
+              {
+                creator: {
+                  companiesId: targetCompanyId,
+                },
+              },
+            ],
+          },
+          select: {
+            id: true,
+            materialName: true,
+            plannedGiDate: true,
+            allocatedQty: true,
+          },
+        }),
+        prisma.monthlyAllocations.findMany({
+          where: {
+            AND: [
+              {
+                date: dateFilter,
+              },
+              {
+                creator: {
+                  companiesId: targetCompanyId,
+                },
+              },
+            ],
+          },
+          select: {
+            date: true,
+            totalElpiji: true,
+          },
+        }),
+      ]);
 
-    // 1. Reduce allocatedQty berdasarkan plannedGiDate dari allocationData
+    // 1. Pre-index allocation dan monthly data ke Map untuk lookup O(1)
     const plannedAllocationByDate = allocationData.reduce((acc: any, item) => {
       const plannedDateKey = item.plannedGiDate
         ? new Date(item.plannedGiDate).toISOString().split("T")[0]
@@ -147,9 +165,7 @@ export async function POST(req: NextRequest) {
 
       return acc;
     }, {});
-    const totalPlannedAllocation = Object.values(plannedAllocationByDate)[0];
 
-    // Mengambil semua data yang difilter tanpa pagination
     const allocationMap = new Map(
       allocationData.map((item) => [
         item.id,
@@ -163,6 +179,13 @@ export async function POST(req: NextRequest) {
       ])
     );
 
+    const monthlyDataMap = new Map(
+      monthlyData.map((m) => [
+        new Date(m.date).toISOString().split("T")[0],
+        m.totalElpiji,
+      ])
+    );
+
     // Gabungkan data berdasarkan allocationId
     const mergedData = filteredData.map((item) => ({
       ...item,
@@ -173,15 +196,19 @@ export async function POST(req: NextRequest) {
         allocationMap.get(item.allocationId)?.plannedAllocationQty || 0,
     }));
 
-    const firstCompany = companyData[0];
+    const jsonObject = company
+      ? {
+          companyName: company.companyName,
+          address: company.address,
+          telephone: company.telephone,
+        }
+      : {
+          companyName: "",
+          address: "",
+          telephone: "",
+        };
 
-    const jsonObject = {
-      companyName: firstCompany.companyName,
-      address: firstCompany.address,
-      telephone: firstCompany.telephone,
-    };
-
-    // Group data by date
+    // Group data by date dengan O(1) lookup ke monthlyDataMap
     const groupedData = mergedData.reduce((acc: any, item) => {
       const dateKey = new Date(item.giDate).toISOString().split("T")[0];
 
@@ -202,13 +229,9 @@ export async function POST(req: NextRequest) {
 
       acc[dateKey].records.push(item);
 
-      const matchingMonthly = monthlyData.find(
-        (m) => new Date(m.date).toISOString().split("T")[0] === dateKey
-      );
+      const matchingElpiji = monthlyDataMap.get(dateKey) || 0;
 
-      acc[dateKey].quantity.totalElpiji = matchingMonthly
-        ? matchingMonthly.totalElpiji
-        : 0;
+      acc[dateKey].quantity.totalElpiji = matchingElpiji;
       acc[dateKey].quantity.totalAllocatedQty =
         plannedAllocationByDate[dateKey] || 0;
       acc[dateKey].quantity.totalDistributionQty += item.distributionQty || 0;

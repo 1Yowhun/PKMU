@@ -9,12 +9,12 @@ export const metadata = {
 };
 
 const CompanyPage = async () => {
-  const data = await getCompaniesAll();
   const { user, session } = await getCurrentSession();
-  if (!session && !user) {
+  if (!session || !user) {
     redirect("/auth/login");
   }
 
+  const data = await getCompaniesAll();
   return <Companies columns={companiesColumns} data={data} user={user} />;
 };
 

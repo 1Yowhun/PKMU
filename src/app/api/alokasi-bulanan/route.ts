@@ -1,10 +1,23 @@
 import prisma from "@/lib/db";
+import { validateRequest } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
+    const { session, user: authUser } = await validateRequest();
+    if (!session || !authUser) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { month, user } = body;
+
+    if (!month) {
+      return NextResponse.json(
+        { message: "Month is required" },
+        { status: 400 }
+      );
+    }
 
     const dateObj = new Date(month);
 
@@ -26,12 +39,8 @@ export async function POST(req: NextRequest) {
     lastDayOfMonth.setUTCDate(lastDayOfMonth.getUTCDate() + 1);
     lastDayOfMonth.setUTCHours(17, 0, 0, 0);
 
-    if (!month) {
-      return NextResponse.json(
-        { message: "Month is required" },
-        { status: 400 }
-      );
-    }
+    const targetCompanyId =
+      authUser.role === "ADMIN" && user ? user : authUser.companiesId;
 
     const data = await prisma.monthlyAllocations.findMany({
       where: {
@@ -44,7 +53,7 @@ export async function POST(req: NextRequest) {
           },
           {
             creator: {
-              companiesId: user,
+              companiesId: targetCompanyId,
             },
           },
         ],
@@ -60,7 +69,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-
     return NextResponse.json(
       {
         message: data.length ? "Data fetched successfully" : "No data found",
@@ -70,7 +78,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error processing request:", error);
+    console.error("Error processing request in alokasi-bulanan:", error);
     return NextResponse.json(
       { message: "Internal Server Error" },
       { status: 500 }

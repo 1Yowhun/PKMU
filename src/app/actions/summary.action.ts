@@ -14,7 +14,7 @@ export const getSummaryToday = async (company_id: number) => {
   tomorrow.setHours(23, 59, 59, 999);
 
   const [dailySummary, dailySummaryPlanned, distributionSummary, monthlyData] =
-    await prisma.$transaction([
+    await Promise.all([
       prisma.allocations.aggregate({
         _sum: { allocatedQty: true },
         _count: { _all: true },
@@ -169,7 +169,7 @@ export const getWeeklySummaryDefault = async (company_id: number) => {
     );
   }
   const [dailySummary, distributionSummary, monthlyData] =
-    await prisma.$transaction([
+    await Promise.all([
       prisma.allocations.groupBy({
         by: ["plannedGiDate"],
         _sum: { allocatedQty: true },
@@ -280,7 +280,7 @@ export const getAnnualSummaryData = async (company_id: number) => {
   const allData = await Promise.all(
     months.map(async ({ startDate, endDate, month }) => {
       const [dailySummary, distributionSummary, monthlySummary] =
-        await prisma.$transaction([
+        await Promise.all([
           prisma.allocations.groupBy({
             by: ["giDate"],
             _sum: { allocatedQty: true },
@@ -389,7 +389,7 @@ export const getAnnualSummaryData = async (company_id: number) => {
 
 export const allDataDefault = async (company_id: number) => {
   const [allSummary, allDistributionSummary, allMonthlyData, uniqueDate] =
-    await prisma.$transaction([
+    await Promise.all([
       prisma.allocations.aggregate({
         _sum: { allocatedQty: true },
         _count: { _all: true },

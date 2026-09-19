@@ -9,7 +9,7 @@ export const metadata = {
 
 export default async function DownloadPage() {
   const { user, session } = await getCurrentSession();
-  if (!session && !user) {
+  if (!session || !user) {
     redirect("/auth/login");
   }
   const dataBpeDeliveryAgent = await getFilterData(user.companiesId);

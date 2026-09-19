@@ -34,10 +34,13 @@ export default async function RootLayout({
   const cookieStore = cookies();
   const defaultOpen = cookieStore.get("sidebar:state")?.value === "true";
   const dataUser = await getCurrentSession();
-  const image = await getCompaniesImage(dataUser.user?.companiesId!);
-  // if (!dataUser?.session || !dataUser?.user) {
-  //   redirect("/auth/login");
-  // }
+
+  const image = dataUser.user?.companiesId
+    ? await getCompaniesImage(dataUser.user.companiesId)
+    : [];
+  const imageUrl = image?.[0]?.imageUrl || "";
+
+  const isAuthenticated = Boolean(dataUser?.session && dataUser?.user);
 
   return (
     <html lang="en" className="light">
@@ -45,16 +48,18 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* <ThemeProvider attribute="class" defaultTheme="system" enableSystem> */}
-        <SidebarProvider defaultOpen={defaultOpen}>
-          <AppSidebar user={dataUser.user} image={image[0].imageUrl} />
-          <main className="w-full">
-            <SidebarTrigger className="h-20 w-20" />
-            {children}
-          </main>
-        </SidebarProvider>
+        {isAuthenticated ? (
+          <SidebarProvider defaultOpen={defaultOpen}>
+            <AppSidebar user={dataUser.user} image={imageUrl} />
+            <main className="w-full">
+              <SidebarTrigger className="h-20 w-20" />
+              {children}
+            </main>
+          </SidebarProvider>
+        ) : (
+          <main className="w-full min-h-screen">{children}</main>
+        )}
         <Toaster />
-        {/* </ThemeProvider> */}
       </body>
     </html>
   );

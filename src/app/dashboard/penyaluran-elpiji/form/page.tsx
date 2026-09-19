@@ -19,9 +19,13 @@ const FormLpgPage = async ({
   };
 }) => {
   const { session, user } = await getCurrentSession();
-  if (!session && !user) {
+  if (!session || !user) {
     redirect("/auth/login");
   }
+  if (user.role !== "ADMIN") {
+    redirect("/dashboard/penyaluran-elpiji");
+  }
+
   const query = searchParams?.query || "";
   const data = await searchDeliveryNumber(query, user.companiesId);
   const bpe = await getNextNumber(user.companiesId);

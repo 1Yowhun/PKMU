@@ -28,16 +28,23 @@ const DistributionForm = ({ data, bpe, user }: FormSubmit) => {
 
   const searchParams = useSearchParams();
   const pathName = usePathname();
-  const { replace } = useRouter();
+  const router = useRouter();
   const handleSearch = useDebouncedCallback((term: string) => {
     const params = new URLSearchParams(searchParams);
     term ? params.set("query", term) : params.delete("query");
-    replace(`${pathName}?${params.toString()}`);
+    router.replace(`${pathName}?${params.toString()}`);
   }, 400);
 
   const handleSubmitDistribution = async (formData: FormData) => {
     setLoading(true);
-    formData.set("waktuPengambilan", date);
+    const validDate =
+      date instanceof Date
+        ? date.toISOString()
+        : date
+        ? new Date(date).toISOString()
+        : new Date().toISOString();
+    formData.set("waktuPengambilan", validDate);
+
     const result = await postLpgData(formData);
     if (result?.error) {
       setLoading(false);
@@ -55,17 +62,16 @@ const DistributionForm = ({ data, bpe, user }: FormSubmit) => {
         description: "Distribusi elpiji berhasil ditambahkan",
         duration: 3000,
       });
-      redirect("/dashboard/penyaluran-elpiji");
+      router.push("/dashboard/penyaluran-elpiji");
     }
   };
 
   if (user.role != "ADMIN") {
-    toast({
-      variant: "destructive",
-      title: "Hanya admin yang bisa akses",
-      duration: 3000,
-    });
-    redirect("/dashboard/penyaluran-elpiji");
+    return (
+      <div className="p-8 text-center text-red-500 font-semibold">
+        Hanya admin yang bisa akses halaman ini.
+      </div>
+    );
   }
 
   return (

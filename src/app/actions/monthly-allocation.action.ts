@@ -1,7 +1,10 @@
+"use server";
+
 import prisma from "@/lib/db";
 import { endOfMonth, startOfMonth } from "date-fns";
+import { cache } from "react";
 
-export const getDefaultMonthlyData = async (company_id: number) => {
+export const getDefaultMonthlyData = cache(async (company_id: number) => {
   const start = startOfMonth(new Date()); // Awal bulan (misal: 2025-03-01)
   const end = endOfMonth(new Date());
   const data = await prisma.monthlyAllocations.findMany({
@@ -32,4 +35,4 @@ export const getDefaultMonthlyData = async (company_id: number) => {
     take: 31,
   });
   return data;
-};
+});

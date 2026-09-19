@@ -27,6 +27,7 @@ import RekapPenyaluranBe from "@/components/FeatureComponents/CetakDistribusi/Re
 import { id } from "date-fns/locale";
 import dynamic from "next/dynamic";
 import type { User } from "../../../../generated/prisma_client";
+import { toast } from "@/hooks/use-toast";
 
 const PDFDownloadLink = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
@@ -66,7 +67,6 @@ export default function DownloadComponent({
   dataBpeDeliveryAgent: bpeNumberData[];
   user: User;
 }) {
-  const [userCompanyId, setUserCompanyId] = useState(user.companiesId);
   const [loading, setLoading] = useState(false);
   const [pdf, setPdf] = useState<any>([]);
   const [companyData, setCompanyData] = useState<any>([]);
@@ -92,7 +92,7 @@ export default function DownloadComponent({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          company_id: userCompanyId,
+          company_id: user.companiesId,
           ...values,
           range: {
             from: from ? format(new Date(from), "yyyy-MM-dd") : null,
@@ -101,8 +101,18 @@ export default function DownloadComponent({
         }),
       });
       const result = await response.json();
+
+      if (!result?.result?.data || result.result.data.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Tidak ada data",
+          description: "Tidak ditemukan data untuk filter yang dipilih.",
+        });
+        setPdf([]);
+        return;
+      }
+
       setPdf(result.result.data);
-      console.log(result.result.data);
       setCompanyData(result.result.companyData);
       // Menunggu PDF ter-generate sebelum klik
       setTimeout(() => {
@@ -110,6 +120,11 @@ export default function DownloadComponent({
       }, 500);
     } catch (error) {
       console.error("Error fetching data:", error);
+      toast({
+        variant: "destructive",
+        title: "Gagal Mengambil Data",
+        description: "Terjadi kesalahan saat memproses data rekap.",
+      });
     }
   }
 
@@ -291,23 +306,24 @@ export default function DownloadComponent({
           </Form>
         </Card>
         {/* Trigger PDF download automatically after form submission */}
-        {/* {data.length > 0 && ( */}
-        <PDFDownloadLink
-          className="text-center"
-          document={
-            <RekapPenyaluranBe
-              data={pdf}
-              company={companyData}
-              isAgentFiltered={isAgentFiltered}
-            />
-          }
-          fileName={`Rekap Penyaluran Elpiji.pdf`}
-        >
-          <Button ref={downloadLinkRef} className="hidden">
-            <Download className="h-4 w-4 text-green-500 cursor-pointer mr-2" />
-            <span className="truncate">Unduh Rekap</span>
-          </Button>
-        </PDFDownloadLink>
+        {pdf && pdf.length > 0 && (
+          <PDFDownloadLink
+            className="text-center"
+            document={
+              <RekapPenyaluranBe
+                data={pdf}
+                company={companyData}
+                isAgentFiltered={isAgentFiltered}
+              />
+            }
+            fileName={`Rekap Penyaluran Elpiji.pdf`}
+          >
+            <Button ref={downloadLinkRef} className="hidden">
+              <Download className="h-4 w-4 text-green-500 cursor-pointer mr-2" />
+              <span className="truncate">Unduh Rekap</span>
+            </Button>
+          </PDFDownloadLink>
+        )}
       </div>
     </div>
   );

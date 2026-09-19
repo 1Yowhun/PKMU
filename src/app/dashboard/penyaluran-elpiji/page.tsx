@@ -12,7 +12,7 @@ export const metadata = {
 
 const PenyaluranElpijiPage = async () => {
   const { user, session } = await getCurrentSession();
-  if (!session && !user) {
+  if (!session || !user) {
     redirect("/auth/login");
   }
   const [dataBpeDeliveryAgent, defaultData] = await Promise.all([

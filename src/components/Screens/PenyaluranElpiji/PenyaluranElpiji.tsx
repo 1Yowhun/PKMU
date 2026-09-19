@@ -66,9 +66,12 @@ export default function PenyaluranElpiji({
   dataBpeDeliveryAgent: bpeNumberData[];
   defaultData: any;
 }) {
-  const uniqueAgents = [
-    ...new Set(defaultData.map((allocation: any) => allocation.agentName)),
-  ];
+  const uniqueAgents = useMemo(
+    () => [
+      ...new Set(defaultData.map((allocation: any) => allocation.agentName)),
+    ],
+    [defaultData]
+  );
 
   const totalQty = useMemo(
     () =>

@@ -3,13 +3,14 @@ import React, { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { FormSubmit } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { postCompaniesData } from "@/app/actions/companies.action";
 import { Loader2 } from "lucide-react";
 
 const CompanyForm = ({ user }: FormSubmit) => {
+  const router = useRouter();
   const [phone, setPhone] = useState("");
   const ref = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
@@ -35,17 +36,16 @@ const CompanyForm = ({ user }: FormSubmit) => {
         description: "Perusahaan berhasil ditambahkan",
         duration: 3000,
       });
-      redirect("/master-data/companies");
+      router.push("/master-data/companies");
     }
   };
 
-  if (user.role != "ADMIN") {
-    toast({
-      variant: "destructive",
-      title: "Hanya admin yang bisa akses",
-      duration: 3000,
-    });
-    redirect("/dashboard/penyaluran-elpiji");
+  if (user.role !== "ADMIN") {
+    return (
+      <div className="p-8 text-center text-red-500 font-semibold">
+        Hanya admin yang bisa akses halaman ini.
+      </div>
+    );
   }
 
   return (

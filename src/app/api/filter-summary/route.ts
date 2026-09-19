@@ -1,13 +1,15 @@
 import prisma from "@/lib/db";
+import { validateRequest } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405 });
+    const { session, user: authUser } = await validateRequest();
+    if (!session || !authUser) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    const body = await req.json();
 
+    const body = await req.json();
     const { from, to, company_id } = body;
 
     let fromDate = from ? new Date(from) : null;
@@ -29,13 +31,18 @@ export async function POST(req: NextRequest) {
 
     const dateFilter = fromDate && toDate ? { gte: fromDate, lte: toDate } : {};
 
+    const targetCompanyId =
+      authUser.role === "ADMIN" && company_id
+        ? company_id
+        : authUser.companiesId;
+
     const [
       dailySummary,
       dailySummaryGiDate,
       distributionSummary,
       monthlyData,
       uniqueDate,
-    ] = await prisma.$transaction([
+    ] = await Promise.all([
       prisma.allocations.aggregate({
         _sum: { allocatedQty: true },
         _count: { allocatedQty: true },
@@ -44,12 +51,11 @@ export async function POST(req: NextRequest) {
             { plannedGiDate: dateFilter },
             {
               creator: {
-                companiesId: company_id,
+                companiesId: targetCompanyId,
               },
             },
           ],
         },
-        orderBy: { plannedGiDate: "asc" },
       }),
       prisma.allocations.aggregate({
         _sum: { allocatedQty: true },
@@ -59,12 +65,11 @@ export async function POST(req: NextRequest) {
             { giDate: dateFilter },
             {
               creator: {
-                companiesId: company_id,
+                companiesId: targetCompanyId,
               },
             },
           ],
         },
-        orderBy: { giDate: "asc" },
       }),
       prisma.lpgDistributions.aggregate({
         _sum: { distributionQty: true },
@@ -74,12 +79,11 @@ export async function POST(req: NextRequest) {
             { giDate: dateFilter },
             {
               creator: {
-                companiesId: company_id,
+                companiesId: targetCompanyId,
               },
             },
           ],
         },
-        orderBy: { giDate: "asc" },
       }),
       prisma.monthlyAllocations.aggregate({
         _sum: { totalElpiji: true },
@@ -89,12 +93,11 @@ export async function POST(req: NextRequest) {
             { date: dateFilter },
             {
               creator: {
-                companiesId: company_id,
+                companiesId: targetCompanyId,
               },
             },
           ],
         },
-        orderBy: { date: "asc" },
       }),
       prisma.lpgDistributions.findMany({
         distinct: ["giDate"],
@@ -106,7 +109,7 @@ export async function POST(req: NextRequest) {
             { giDate: dateFilter },
             {
               creator: {
-                companiesId: company_id,
+                companiesId: targetCompanyId,
               },
             },
           ],
@@ -117,10 +120,7 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
-    const totalProps = uniqueDate.reduce(
-      (a, obj) => a + Object.keys(obj).length,
-      0
-    );
+    const totalProps = uniqueDate.length;
 
     // Pake buat PlannedGi
     const dailyAllo = dailySummary._sum?.allocatedQty;
@@ -152,7 +152,6 @@ export async function POST(req: NextRequest) {
       _count: { businessDays: totalProps },
     };
 
-    // Contoh response
     return NextResponse.json(
       {
         message: "Date range received",
@@ -170,6 +169,7 @@ export async function POST(req: NextRequest) {
       }
     );
   } catch (error) {
+    console.error("Error in filter-summary:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

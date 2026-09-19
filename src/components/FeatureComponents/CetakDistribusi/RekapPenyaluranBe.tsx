@@ -69,24 +69,28 @@ const styles = StyleSheet.create({
 });
 
 const RekapPenyaluranBe = ({ data, company, isAgentFiltered }: any) => {
-  const TOTAL = data.reduce((acc: any, item: any) => {
-    const subtotal = item.records.reduce(
-      (sum: any, record: any) => sum + record.allocatedQty,
-      0
-    );
-    return acc + subtotal;
-  }, 0);
+  const TOTAL = Array.isArray(data)
+    ? data.reduce((acc: number, item: any) => {
+        const subtotal = Array.isArray(item?.records)
+          ? item.records.reduce(
+              (sum: number, record: any) => sum + (record?.allocatedQty || 0),
+              0
+            )
+          : 0;
+        return acc + subtotal;
+      }, 0)
+    : 0;
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>{company.companyName}</Text>
+          <Text style={styles.title}>{company?.companyName ?? ""}</Text>
           <Text style={styles.subHeader}>
             STASIUN PENGISIAN DAN PENGANGKUTAN BULK ELPIJI (SPPBE)
           </Text>
-          <Text style={styles.subHeader}>{company.address}</Text>
-          <Text style={styles.subHeader}>Telp/Fax: {company.telephone}</Text>
+          <Text style={styles.subHeader}>{company?.address ?? ""}</Text>
+          <Text style={styles.subHeader}>Telp/Fax: {company?.telephone ?? ""}</Text>
         </View>
 
         <Text
@@ -141,16 +145,12 @@ const RekapPenyaluranBe = ({ data, company, isAgentFiltered }: any) => {
                   </View>
 
                   {/* Table Body */}
-                  {item.records.map(
-                    (record: any, idx: number) => (
-                      (item.quantity.totalDistributionQty +=
-                        record.allocatedQty),
-                      (
-                        <View
-                          key={`${index}-${idx}`}
-                          style={styles.tableRow}
-                          wrap={false}
-                        >
+                  {item.records.map((record: any, idx: number) => (
+                    <View
+                      key={`${index}-${idx}`}
+                      style={styles.tableRow}
+                      wrap={false}
+                    >
                           <Text
                             style={[styles.tableCell, { flex: 1.5 }]}
                             wrap={false}
@@ -200,9 +200,7 @@ const RekapPenyaluranBe = ({ data, company, isAgentFiltered }: any) => {
                             {formatNumberQty(record.volume)}
                           </Text>
                         </View>
-                      )
-                    )
-                  )}
+                  ))}
                   <View wrap={false}>
                     <View
                       style={[styles.tableRow, styles.summaryRow]}
@@ -241,7 +239,7 @@ const RekapPenyaluranBe = ({ data, company, isAgentFiltered }: any) => {
                         {formatNumberQty(item.quantity.totalAllocatedQty * 3)}
                       </Text>
                     </View>
-                    {isAgentFiltered == "" && (
+                    {!isAgentFiltered && (
                       <>
                         <View
                           style={[styles.tableRow, styles.summaryRow]}

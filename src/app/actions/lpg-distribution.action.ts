@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getErrorMessage } from "./error.action";
 import { getCurrentSession } from "./auth.actions";
 import { cache } from "react";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { id } from "date-fns/locale";
 
 export const searchDeliveryNumber = async (query: string, user: number) => {
@@ -48,66 +48,96 @@ export const searchDeliveryNumber = async (query: string, user: number) => {
 };
 
 export const postLpgData = async (formData: FormData) => {
-  const allocationid = Number(formData.get("allocationid"));
-  const nomorTransaksi = formData.get("nomorTransaksi")?.toString() || "";
-  const nomorDo = formData.get("nomorDo")?.toString() || "";
-  const namaAgen = formData.get("namaAgen")?.toString() || "";
-  const waktuPengambilan = formData.get("waktuPengambilan")
-    ? new Date(formData.get("waktuPengambilan")!.toString())
-    : new Date();
-  const platKendaraan = formData.get("platKendaraan")?.toString() || "";
-  const namaSopir = formData.get("namaSopir")?.toString() || "";
-  const status = formData.get("status")?.toString() || "Pending";
-  const jumlahTabung = Number(formData.get("jumlahTabung")) || 0;
-  const volumeTabung = Number(formData.get("volumeTabung")) || 0;
-  const jumlahTabungBocor = formData.get("jumlahTabungBocor")
-    ? Number(formData.get("jumlahTabungBocor"))
-    : null;
-
-  const isiKurang = formData.get("isiKurang")
-    ? Number(formData.get("isiKurang"))
-    : null;
-  const shipTo = formData.get("shipTo")?.toString() || "";
-  const superVisor = formData.get("superVisor")?.toString() || "";
-  const administrasi = formData.get("administrasi")?.toString() || "";
-  const gateKeeper = formData.get("gateKeeper")?.toString() || "";
-
-  waktuPengambilan.setUTCHours(0, 0, 0, 0);
-  if (
-    !nomorTransaksi ||
-    !nomorDo ||
-    !namaAgen ||
-    !waktuPengambilan ||
-    !platKendaraan ||
-    !namaSopir ||
-    !status
-  )
-    return {
-      error: "Semua field harus diisi",
-    };
-  const { user } = await getCurrentSession();
-  if (!user)
-    return {
-      error: "User tidak ada atau user belum login",
-    };
-
-  const checkLpgData = await prisma.lpgDistributions.findMany({
-    where: {
-      giDate: waktuPengambilan,
-      bpeNumber: nomorTransaksi,
-      creator: {
-        companiesId: user.companiesId,
-      },
-    },
-  });
-
-  if (checkLpgData.length > 0) {
-    return {
-      error: "Data penyaluran lpg ini sudah diisi",
-    };
-  }
-
   try {
+    const allocationid = Number(formData.get("allocationid"));
+    const nomorTransaksi = formData.get("nomorTransaksi")?.toString() || "";
+    const nomorDo = formData.get("nomorDo")?.toString() || "";
+    const namaAgen = formData.get("namaAgen")?.toString() || "";
+    const rawWaktu = formData.get("waktuPengambilan")?.toString();
+
+    let waktuPengambilan: Date = new Date();
+    if (rawWaktu) {
+      const parsedDirect = new Date(rawWaktu);
+      if (!isNaN(parsedDirect.getTime())) {
+        waktuPengambilan = parsedDirect;
+      } else {
+        try {
+          const parsedId = parse(rawWaktu, "dd MMMM yyyy", new Date(), {
+            locale: id,
+          });
+          if (!isNaN(parsedId.getTime())) {
+            waktuPengambilan = parsedId;
+          }
+        } catch {
+          // fallback to new Date()
+        }
+      }
+    }
+
+    const platKendaraan = formData.get("platKendaraan")?.toString() || "";
+    const namaSopir = formData.get("namaSopir")?.toString() || "";
+    const status = formData.get("status")?.toString() || "Pending";
+    const jumlahTabung = Number(formData.get("jumlahTabung")) || 0;
+    const volumeTabung = Number(formData.get("volumeTabung")) || 0;
+    const jumlahTabungBocor = formData.get("jumlahTabungBocor")
+      ? Number(formData.get("jumlahTabungBocor"))
+      : null;
+
+    const isiKurang = formData.get("isiKurang")
+      ? Number(formData.get("isiKurang"))
+      : null;
+    const shipTo = formData.get("shipTo")?.toString() || "";
+    const superVisor = formData.get("superVisor")?.toString() || "";
+    const administrasi = formData.get("administrasi")?.toString() || "";
+    const gateKeeper = formData.get("gateKeeper")?.toString() || "";
+
+    waktuPengambilan.setUTCHours(0, 0, 0, 0);
+
+    if (
+      !nomorTransaksi ||
+      !nomorDo ||
+      !namaAgen ||
+      !waktuPengambilan ||
+      isNaN(waktuPengambilan.getTime()) ||
+      !platKendaraan ||
+      !namaSopir ||
+      !status
+    ) {
+      return {
+        error: "Semua field harus diisi",
+      };
+    }
+
+    if (!allocationid || isNaN(allocationid)) {
+      return {
+        error:
+          "Alokasi belum dipilih atau tidak valid. Silakan masukkan Nomor DO yang sesuai.",
+      };
+    }
+
+    const { user } = await getCurrentSession();
+    if (!user) {
+      return {
+        error: "User tidak ada atau user belum login",
+      };
+    }
+
+    const checkLpgData = await prisma.lpgDistributions.findMany({
+      where: {
+        giDate: waktuPengambilan,
+        bpeNumber: nomorTransaksi,
+        creator: {
+          companiesId: user.companiesId,
+        },
+      },
+    });
+
+    if (checkLpgData.length > 0) {
+      return {
+        error: "Data penyaluran lpg ini sudah diisi",
+      };
+    }
+
     const dataLpg: LpgDistributions = await prisma.lpgDistributions.create({
       data: {
         allocationId: allocationid,
@@ -141,8 +171,12 @@ export const postLpgData = async (formData: FormData) => {
         updatedBy: user.id,
       },
     });
+
     revalidatePath("/dashboard/alokasi-harian");
+    revalidatePath("/dashboard/penyaluran-elpiji");
+    return { success: true, data: dataLpg };
   } catch (error) {
+    console.error("Error postLpgData:", error);
     return {
       error: getErrorMessage(error),
     };
@@ -151,11 +185,19 @@ export const postLpgData = async (formData: FormData) => {
 
 export const getAllLpg = async (): Promise<LpgDistributions[]> => {
   try {
+    const { user } = await getCurrentSession();
     const data = await prisma.lpgDistributions.findMany({
       where: {
         status: {
           in: ["Pending", "Approved"],
         },
+        ...(user?.companiesId
+          ? {
+              creator: {
+                companiesId: user.companiesId,
+              },
+            }
+          : {}),
       },
     });
     return data as LpgDistributions[];
@@ -179,6 +221,34 @@ export const UpdateLpgData = async (formData: FormData) => {
   if (!id) {
     return {
       error: "ID is missing.",
+    };
+  }
+
+  const { session, user } = await getCurrentSession();
+  if (!session || !user) {
+    return {
+      error: "Sesi tidak valid. Silakan login kembali.",
+    };
+  }
+
+  const existing = await prisma.lpgDistributions.findUnique({
+    where: { id: parseInt(id) },
+    select: {
+      creator: {
+        select: {
+          companiesId: true,
+        },
+      },
+    },
+  });
+
+  if (
+    !existing ||
+    (user.role !== "ADMIN" &&
+      existing.creator?.companiesId !== user.companiesId)
+  ) {
+    return {
+      error: "Anda tidak memiliki izin untuk mengubah data ini.",
     };
   }
 
@@ -209,6 +279,40 @@ export const UpdateLpgData = async (formData: FormData) => {
 };
 
 export const deleteLpgData = async (id: number) => {
+  if (!id) {
+    return {
+      error: "ID tidak valid.",
+    };
+  }
+
+  const { session, user } = await getCurrentSession();
+  if (!session || !user) {
+    return {
+      error: "Sesi tidak valid. Silakan login kembali.",
+    };
+  }
+
+  const existing = await prisma.lpgDistributions.findUnique({
+    where: { id: id },
+    select: {
+      creator: {
+        select: {
+          companiesId: true,
+        },
+      },
+    },
+  });
+
+  if (
+    !existing ||
+    (user.role !== "ADMIN" &&
+      existing.creator?.companiesId !== user.companiesId)
+  ) {
+    return {
+      error: "Anda tidak memiliki izin untuk menghapus data ini.",
+    };
+  }
+
   try {
     await prisma.lpgDistributions.delete({
       where: {
@@ -216,6 +320,7 @@ export const deleteLpgData = async (id: number) => {
       },
     });
     revalidatePath("/dashboard/penyaluran-elpiji");
+    return { success: true };
   } catch (error) {
     return {
       error: getErrorMessage(error),

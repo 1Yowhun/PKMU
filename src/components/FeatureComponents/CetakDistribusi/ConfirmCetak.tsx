@@ -20,6 +20,7 @@ import CetakPlastikWrap from "./CetakPlastikWrap";
 import { getCompaniesMetaData } from "@/app/actions/companies.action";
 
 const ConfirmCetak = ({ row, type }: any) => {
+  const [open, setOpen] = useState(false);
   const [id, setId] = useState(row.id);
   const [userId, setUserId] = useState(row.createdBy);
   const [platKendaraan, setPlatKendaraan] = useState(row.licensePlate ?? "");
@@ -38,14 +39,14 @@ const ConfirmCetak = ({ row, type }: any) => {
   const handlePrepareDownload = async () => {
     setLoading(true);
     const result = await getCompaniesMetaData(userId);
-    setCompanies(result[0]);
+    setCompanies(result?.[0] ?? null);
 
     setLoading(false);
     setIsDataPrepared(true);
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           variant="outline"
@@ -66,7 +67,8 @@ const ConfirmCetak = ({ row, type }: any) => {
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+      {open && (
+        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
         <div>
           <DialogHeader>
             <DialogTitle>Print Data</DialogTitle>
@@ -186,6 +188,7 @@ const ConfirmCetak = ({ row, type }: any) => {
           </DialogFooter>
         </div>
       </DialogContent>
+      )}
     </Dialog>
   );
 };
