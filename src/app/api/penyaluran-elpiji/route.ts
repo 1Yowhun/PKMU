@@ -4,7 +4,14 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { agentName, deliveryNumber, range, page = 1, pageSize = 15 } = body;
+    const {
+      company_id,
+      agentName,
+      deliveryNumber,
+      range,
+      page = 1,
+      pageSize = 15,
+    } = body;
 
     const whereConditions: any = {};
 
@@ -48,6 +55,11 @@ export async function POST(req: NextRequest) {
         lte: new Date(end.setHours(23, 59, 59, 999)), // Set waktu akhir hari
       };
     }
+
+    whereConditions.creator = {
+      companiesId: company_id,
+    };
+
 
     const skip = (page - 1) * pageSize;
     const take = pageSize;
@@ -99,11 +111,15 @@ export async function POST(req: NextRequest) {
         deliveryNumber: true,
         allocatedQty: true,
         distributionQty: true,
-        volume: true,
         driverName: true,
+        administrasi: true,
+        superVisor: true,
+        gateKeeper: true,
+        volume: true,
         bocor: true,
         isiKurang: true,
         updatedAt: true,
+        createdBy: true,
       },
     });
 

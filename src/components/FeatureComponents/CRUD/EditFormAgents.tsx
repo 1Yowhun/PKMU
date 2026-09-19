@@ -33,7 +33,7 @@ const EditFormAgents = ({ row }: any) => {
     try {
       setLoading(true);
       const result = await updateAgentData(formData);
-  
+
       if (result?.error) {
         toast({
           title: "Gagal",
@@ -141,7 +141,7 @@ const EditFormAgents = ({ row }: any) => {
                   id="agentName"
                   name="agentName"
                   value={agentName}
-                  onChange={(e) => setAgentName(e.target.value)}
+                  onChange={(e) => setAgentName(e.target.value.toUpperCase())}
                   className="col-span-3"
                   required={true}
                 />
@@ -158,11 +158,10 @@ const EditFormAgents = ({ row }: any) => {
                   type="number"
                   className={`${noSpinner} col-span-3`}
                   required={true}
+                  maxLength={15}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value.length <= 12) {
-                      setPhone(value);
-                    }
+                    setPhone(value);
                   }}
                 />
               </div>
@@ -184,7 +183,7 @@ const EditFormAgents = ({ row }: any) => {
                   id="address"
                   name="address"
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={(e) => setAddress(e.target.value.toUpperCase())}
                   className="col-span-3"
                   required={true}
                 />
@@ -197,7 +196,7 @@ const EditFormAgents = ({ row }: any) => {
                   id="city"
                   name="city"
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  onChange={(e) => setCity(e.target.value.toUpperCase())}
                   className="col-span-3"
                   required={true}
                 />

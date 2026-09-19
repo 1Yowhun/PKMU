@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const RekapPenyaluranBe = ({ data, isAgentFiltered }: any) => {
+const RekapPenyaluranBe = ({ data, company, isAgentFiltered }: any) => {
   const TOTAL = data.reduce((acc: any, item: any) => {
     const subtotal = item.records.reduce(
       (sum: any, record: any) => sum + record.allocatedQty,
@@ -81,17 +81,12 @@ const RekapPenyaluranBe = ({ data, isAgentFiltered }: any) => {
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>PT. Puri Kencana Merdeka Utama</Text>
+          <Text style={styles.title}>{company.companyName}</Text>
           <Text style={styles.subHeader}>
             STASIUN PENGISIAN DAN PENGANGKUTAN BULK ELPIJI (SPPBE)
           </Text>
-          <Text style={styles.subHeader}>
-            Kawasan Industri Candi Blok XI No. 8, JL Candi Raya Timur, Ngaliyan,
-            Semarang
-          </Text>
-          <Text style={styles.subHeader}>
-            Telp/Fax: 024-76633360 / 024-76633361
-          </Text>
+          <Text style={styles.subHeader}>{company.address}</Text>
+          <Text style={styles.subHeader}>Telp/Fax: {company.telephone}</Text>
         </View>
 
         <Text

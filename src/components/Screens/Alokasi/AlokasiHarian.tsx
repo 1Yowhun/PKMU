@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import InfoCard from "@/components/InfoCard";
 import { id } from "date-fns/locale";
+import { toast } from "@/hooks/use-toast";
 
 type valuesFilter = {
   status: string;
@@ -81,6 +82,7 @@ const AlokasiHarian = ({
   const [loading, setLoading] = useState(false);
   const [paginationLoading, setPaginationLoading] = useState(false);
   const [tableData, setTableData] = useState(defaultdata);
+  const [userCompanyId, setUserCompanyId] = useState(user.companiesId);
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: 15,
@@ -120,6 +122,7 @@ const AlokasiHarian = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: userCompanyId,
           ...values,
           range: {
             from: from ? format(new Date(from), "yyyy-MM-dd") : null,
@@ -129,15 +132,27 @@ const AlokasiHarian = ({
           pageSize: pagination.pageSize,
         }),
       });
+
       const result = await response.json();
+
+      if (!result.data || result.data.length === 0) {
+        toast({
+          title: "Tidak ada data",
+          description: "Tidak ditemukan data untuk filter yang dipilih.",
+          variant: "destructive",
+          duration: 1000,
+        });
+        setTableData([]);
+      } else {
+        setTableData(result.data);
+      }
+
       setData({
         totalTabung: result.cardInfo.totalQty.toLocaleString("id-ID"),
         totalBeratTabung: result.cardInfo.totalBeratQty.toLocaleString("id-ID"),
         totalAgen: result.cardInfo.totalAgenCount,
         totalAlokasiHarian: result.cardInfo.totalAlokasiHarian,
       });
-      // console.log(result.data);
-      setTableData(result.data);
       setPagination((prev) => ({
         ...prev,
         page: pageNumber,
@@ -188,7 +203,12 @@ const AlokasiHarian = ({
   return (
     <div className="mx-5">
       <div className="mb-4">
-        <div className="pt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
+        <div className="flex md:flex-row items-start md:items-center gap-4 my-3">
+          <div className="pl-2">
+            <h1 className="text-xl md:text-2xl font-bold">Alokasi Harian</h1>
+          </div>
+        </div>
+        <div className="pt-2 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
           <InfoCard
             icon={<CalendarCheck className="h-10 w-10 text-white" />}
             title="TOTAL TABUNG"
@@ -213,7 +233,9 @@ const AlokasiHarian = ({
         </div>
         <Card className="px-6 py-6 my-3 shadow-lg rounded-2xl bg-white border border-gray-200">
           <div className="px-4 text-center">
-            <h1 className="text-lg font-semibold py-2 pb-4">Filter Alokasi</h1>
+            <h1 className="text-lg font-semibold py-2 pb-4">
+              Filter Alokasi Harian
+            </h1>
           </div>
           <div>
             <Form {...form}>

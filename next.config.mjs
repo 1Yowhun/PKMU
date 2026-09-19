@@ -14,6 +14,14 @@ const nextConfig = {
   experimental: {
     esmExternals: "loose",
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'f6oujhgi9dzrtqrk.public.blob.vercel-storage.com',
+      },
+    ],
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);

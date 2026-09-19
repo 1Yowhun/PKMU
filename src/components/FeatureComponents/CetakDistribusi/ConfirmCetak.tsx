@@ -14,12 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PackageOpen, Printer } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import CetakPenyaluran from "./CetakPenyaluran";
 import CetakPlastikWrap from "./CetakPlastikWrap";
+import { getCompaniesMetaData } from "@/app/actions/companies.action";
 
 const ConfirmCetak = ({ row, type }: any) => {
   const [id, setId] = useState(row.id);
+  const [userId, setUserId] = useState(row.createdBy);
   const [platKendaraan, setPlatKendaraan] = useState(row.licensePlate ?? "");
   const [namaSopir, setNamaSopir] = useState(row.driverName ?? "");
   const [namaSupervisor, setNamaSupervisor] = useState(row.superVisor ?? null);
@@ -29,6 +31,18 @@ const ConfirmCetak = ({ row, type }: any) => {
   );
   const [jumlahTabungBocor, setJumlahTabungBocor] = useState(row.bocor ?? 0);
   const [isiKurang, setIsiKurang] = useState(row.isiKurang ?? 0);
+  const [companies, setCompanies] = useState<any>();
+  const [loading, setLoading] = useState(false);
+  const [isDataPrepared, setIsDataPrepared] = useState(false);
+
+  const handlePrepareDownload = async () => {
+    setLoading(true);
+    const result = await getCompaniesMetaData(userId);
+    setCompanies(result[0]);
+
+    setLoading(false);
+    setIsDataPrepared(true);
+  };
 
   return (
     <Dialog>
@@ -36,6 +50,7 @@ const ConfirmCetak = ({ row, type }: any) => {
         <Button
           variant="outline"
           className="text-center align-center justify-center w-1"
+          onClick={handlePrepareDownload}
         >
           {type == "wrap" ? (
             <PackageOpen
@@ -147,9 +162,9 @@ const ConfirmCetak = ({ row, type }: any) => {
                   className="text-center"
                   document={
                     type === "wrap" ? (
-                      <CetakPlastikWrap data={row} />
+                      <CetakPlastikWrap data={row} companies={companies} />
                     ) : (
-                      <CetakPenyaluran data={row} />
+                      <CetakPenyaluran data={row} companies={companies} />
                     )
                   }
                   fileName={

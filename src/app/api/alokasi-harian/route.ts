@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
+    id,
     status,
     agentName,
     deliveryNumber,
@@ -37,23 +38,31 @@ export async function POST(req: NextRequest) {
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
 
-      whereConditions.OR = [
-        {
-          giDate: null,
-          updatedAt: {
-            gte: start,
-            lte: end,
-          },
-        },
-        {
-          giDate: {
-            not: null,
-            gte: start,
-            lte: end,
-          },
-        },
-      ];
+      whereConditions.plannedGiDate = {
+        gte: start,
+        lte: end,
+      };
+      // .OR = [
+      //   {
+      //     giDate: null,
+      //     updatedAt: {
+      //       gte: start,
+      //       lte: end,
+      //     },
+      //   },
+      //   {
+      //     giDate: {
+      //       not: null,
+      //       gte: start,
+      //       lte: end,
+      //     },
+      //   },
+      // ];
     }
+
+    whereConditions.creator = {
+      companiesId: id,
+    };
 
     if (agentName) {
       whereConditions.agentName = {
@@ -79,7 +88,6 @@ export async function POST(req: NextRequest) {
     const skip = (page - 1) * pageSize;
     const take = pageSize;
 
-    
     const totalQty = await prisma.allocations.aggregate({
       where:
         Object.keys(whereConditions).length > 0 ? whereConditions : undefined,
@@ -88,7 +96,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-
     const totalAgen = await prisma.allocations.groupBy({
       by: ["agentName"],
       where:
@@ -96,7 +103,6 @@ export async function POST(req: NextRequest) {
     });
 
     const totalAgenCount = totalAgen.length;
-
 
     const totalAlokasiHarian = await prisma.allocations.count({
       where:

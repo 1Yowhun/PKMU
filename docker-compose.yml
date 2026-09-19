@@ -1,0 +1,52 @@
+services:
+  postgres_db:
+    image: postgres:17-alpine
+    hostname: postgres_db
+    container_name: postgres_db
+    restart: always
+    env_file:
+      - .env.db
+    networks:
+      - prisma-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pkmu -d spbe"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+
+  nextjs:
+    build: 
+      context: .  
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    stdin_open: true
+    tty: true 
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    env_file:
+      - .env.production
+    networks:
+      - prisma-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - nextjs
+    networks:
+      - prisma-network
+
+networks:
+  prisma-network:
+    name: prisma-network
+
+volumes:
+  postgres_data:

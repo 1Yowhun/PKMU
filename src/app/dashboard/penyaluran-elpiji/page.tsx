@@ -7,28 +7,25 @@ import PenyaluranElpiji from "@/components/Screens/PenyaluranElpiji/PenyaluranEl
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Penyaluran Elpiji PKMU",
+  title: "Penyaluran Elpiji",
 };
 
 const PenyaluranElpijiPage = async () => {
-  const [dataBpeDeliveryAgent, sessionData, defaultData] = await Promise.all([
-    getFilterData(),
-    getCurrentSession(),
-    getLpgDataDefault(),
-  ]);
-
-  const { user, session } = sessionData;
+  const { user, session } = await getCurrentSession();
   if (!session && !user) {
     redirect("/auth/login");
   }
+  const [dataBpeDeliveryAgent, defaultData] = await Promise.all([
+    getFilterData(user.companiesId),
+    getLpgDataDefault(user.companiesId),
+  ]);
+
   return (
-    <>
-      <PenyaluranElpiji
-        user={user}
-        dataBpeDeliveryAgent={dataBpeDeliveryAgent}
-        defaultData={defaultData}
-      />
-    </>
+    <PenyaluranElpiji
+      user={user}
+      dataBpeDeliveryAgent={dataBpeDeliveryAgent}
+      defaultData={defaultData}
+    />
   );
 };
 

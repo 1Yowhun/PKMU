@@ -27,7 +27,6 @@ import {
 import { DatePickerWithRange } from "@/components/FeatureComponents/DateRange";
 import { Button } from "@/components/ui/button";
 import SummaryItems from "@/components/FeatureComponents/SummaryItems";
-import html2canvas from "html2canvas";
 
 import { Prisma } from "../../../../generated/prisma_client";
 import {
@@ -38,19 +37,36 @@ import {
 } from "@/app/actions/summary.action";
 import { downloadAnnuallyChart, downloadWeeklyChart } from "@/utils/page";
 
+type User = {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  username: string;
+  password: string;
+  role: string;
+  companiesId: number | null;
+};
 // 🟢 Ambil otomatis tipe return dari getSummaryToday
 type SummaryProps = {
   defaultdata: Prisma.PromiseReturnType<typeof getSummaryToday>;
   weekly: Prisma.PromiseReturnType<typeof getWeeklySummaryDefault>;
-  annually: any;
+  annually: Prisma.PromiseReturnType<typeof getAnnualSummaryData>;
   allData: any;
+  user: User;
 };
 
-const Summary = ({ defaultdata, weekly, annually, allData }: SummaryProps) => {
+const Summary = ({
+  defaultdata,
+  weekly,
+  annually,
+  allData,
+  user,
+}: SummaryProps) => {
   const [summaryData, setSummaryData] = useState(defaultdata);
   const [allDataSummary, setAllDataSummary] = useState(allData);
   const [weeklySummary, setWeeklySummary] = useState(weekly);
   const [annualSummary, setAnnualSummary] = useState(annually);
+  const [userId, setUserId] = useState(user);
 
   const weeklyChartRef = useRef(null);
   const annuallyChartRef = useRef(null);
@@ -65,12 +81,12 @@ const Summary = ({ defaultdata, weekly, annually, allData }: SummaryProps) => {
 
   const allocationData = weeklySummary.weeklySummary.map((item) => ({
     date: new Date(item.date).toLocaleDateString("id-ID"), // Format jadi YYYY-MM-DD
-    qty: item.dailySummary,
+    qty: Number(item.dailySummary),
   }));
 
   const distributionData = weeklySummary.weeklySummary.map((item) => ({
     date: new Date(item.date).toLocaleDateString("id-ID"),
-    qty: item.distributionSummary,
+    qty: Number(item.distributionSummary),
   }));
 
   const totalElpijiData = weeklySummary.weeklySummary.map((item) => ({
@@ -93,50 +109,6 @@ const Summary = ({ defaultdata, weekly, annually, allData }: SummaryProps) => {
     qty: item.totalMonthlyElpiji,
   }));
 
-  // useEffect(() => {
-  //   loadDataSummary();
-  // }, []);
-
-  // const loadDataSummary = async () => {
-  //   try {
-  //     const [summaryData, weekly, annually] = await Promise.all([
-  //       getSummaryToday(),
-  //       getWeeklySummaryDefault(),
-  //       getAnnualSummaryData(),
-  //       allDataDefault(),
-  //     ]);
-
-  //     // console.log({ summaryData, weekly, annually, allData });
-
-  //     // setSummaryData(summaryData);
-  //     // setAllDataSummary(allData);
-  //     // setWeeklySummary(weekly);
-  //     // setAnnualSummary(annually);
-  //   } catch (error) {
-  //     console.error("Error fetching data:", error);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const [summaryData, weekly, yearly, allData] = await Promise.all([
-  //         getSummaryToday(),
-  //         getWeeklySummaryDefault(),
-  //         getAnnualSummaryData(),
-  //         allDataDefault(),
-  //       ]);
-
-  //       // Handle the retrieved data here
-  //       console.log({ summaryData, weekly, yearly, allData });
-  //     } catch (error) {
-  //       console.error("Error fetching data:", error);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, []);
-
   const fetchSummary = async (
     tgl: { from: Date | null; to: Date | null } | null
   ) => {
@@ -145,7 +117,6 @@ const Summary = ({ defaultdata, weekly, annually, allData }: SummaryProps) => {
     setDateFilter(tgl);
     setIsFiltered(true);
     setLoading(true);
-    // console.log("Selected Date Range:", tgl);
 
     try {
       const response = await fetch("/api/filter-summary", {
@@ -154,18 +125,17 @@ const Summary = ({ defaultdata, weekly, annually, allData }: SummaryProps) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          company_id: userId.companiesId,
           from: tgl.from,
           to: tgl.to,
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`API responded with status ${response.status}`);
+        console.error(`API responded with status ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("Response from API route:", data);
-      console.log(data.dailySummary._count);
 
       const allData = {
         allSummary: {
@@ -193,10 +163,17 @@ const Summary = ({ defaultdata, weekly, annually, allData }: SummaryProps) => {
             totalElpiji: data?.monthlyData?._sum?.totalElpiji ?? 0,
           },
         },
+        allAvgDistribution: {
+          _count: {
+            businessDays: data?.avgDistriSummary?._count?.businessDays ?? 0,
+          },
+          _sum: {
+            average: data?.avgDistriSummary?._sum?.average ?? 0,
+          },
+        },
         pending: data?.pending ?? 0,
         fakultatif: data?.fakultatif ?? 0,
         tidakTembus: data?.tidakTembus ?? 0,
-        average: data?.average ?? 0,
       };
 
       setAllDataSummary(allData);
@@ -250,9 +227,9 @@ const Summary = ({ defaultdata, weekly, annually, allData }: SummaryProps) => {
                   : 0
               } / `}
               additionalInfo={`${
-                summaryData?.dailySummary._sum.allocatedQty
+                summaryData?.dailySummaryPlanned._sum.allocatedQty
                   ? (
-                      summaryData?.dailySummary._sum.allocatedQty * 3
+                      summaryData?.dailySummaryPlanned._sum.allocatedQty * 3
                     ).toLocaleString("id-ID")
                   : "0"
               } Kg`}
@@ -323,13 +300,18 @@ const Summary = ({ defaultdata, weekly, annually, allData }: SummaryProps) => {
             <h1 className="text-xl sm:text-2xl font-semibold">
               Ringkasan
               <span className="text-xs sm:text-sm ml-2 font-semibold text-gray-500">
-                {dateFilter?.from && dateFilter?.to
-                  ? `${format(dateFilter.from, "dd MMMM yyyy", {
-                      locale: id,
-                    })} - ${format(dateFilter.to, "dd MMMM yyyy", {
-                      locale: id,
-                    })}`
-                  : "Semua Tanggal"}
+                {dateFilter?.from ? (
+                  dateFilter.to ? (
+                    <>
+                      {format(dateFilter.from, "dd MMMM yyyy", { locale: id })}{" "}
+                      - {format(dateFilter.to, "dd MMMM yyyy", { locale: id })}
+                    </>
+                  ) : (
+                    format(dateFilter.from, "dd MMMM yyyy", { locale: id })
+                  )
+                ) : (
+                  <span>Semua Tanggal</span>
+                )}
               </span>
             </h1>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center w-full sm:w-auto">
@@ -371,18 +353,14 @@ const Summary = ({ defaultdata, weekly, annually, allData }: SummaryProps) => {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-4">
-            {/* {loading ? (
-              <div className="col-span-full flex justify-center items-center h-40 sm:h-64">
-                <Loader2 className="h-12 w-12 sm:h-16 sm:w-16 animate-spin text-gray-500" />
-              </div>
-            ) : (
-              <> */}
             <SummaryItems
               icon={
                 <CalendarCheck className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
               }
               title={`TOTAL ALOKASI HARIAN (${
-                allDataSummary?.allSummary?._count?._all?.toLocaleString("id-ID") || 0
+                allDataSummary?.allSummary?._count?._all?.toLocaleString(
+                  "id-ID"
+                ) || 0
               })`}
               value={`${(
                 allDataSummary.allSummary._sum.allocatedQty ?? 0
@@ -458,12 +436,16 @@ const Summary = ({ defaultdata, weekly, annually, allData }: SummaryProps) => {
               icon={
                 <ChartSpline className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
               }
-              title="RATA-RATA DISTRIBUSI"
-              value={`${Number(allDataSummary.average).toLocaleString(
-                "id-ID"
-              )} / `}
+              title={`RATA-RATA DISTRIBUSI (${
+                allDataSummary?.allAvgDistribution._count.businessDays.toLocaleString(
+                  "id-ID"
+                ) || 0
+              } Hari Kerja) `}
+              value={`${Number(
+                allDataSummary?.allAvgDistribution._sum.average
+              ).toLocaleString("id-ID")} / `}
               additionalInfo={`${(
-                Number(allDataSummary.average) * 3
+                Number(allDataSummary?.allAvgDistribution._sum.average) * 3
               ).toLocaleString("id-ID")} Kg`}
               cs="p-4"
             />

@@ -81,7 +81,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover
                 <PopoverContent  className='w-full sm:w-[400px] p-0 z-50'
                 // className={cn("w-full sm:w-auto p-0 z-50 bg-white shadow-lg rounded-md border border-slate-200")}
                     align="start">
-                    <div className="p-3 my-2 bg-white z-50 bg-white shadow-lg rounded-md border border-slate-200">
+                    <div className="p-3 my-2 bg-white z-50 shadow-lg rounded-md border border-slate-200">
                         <div className="flex flex-row space-y-4 sm:flex-col sm:space-x-4 sm:space-y-0">
                             <div className="space-y-4">
                                 <div className="relative flex items-center justify-center pt-1">

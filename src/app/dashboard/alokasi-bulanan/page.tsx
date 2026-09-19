@@ -1,30 +1,27 @@
-import { getMonthlyAllocation } from "@/app/actions/alokasi.action";
 import { getCurrentSession } from "@/app/actions/auth.actions";
-import { ContentLayout } from "@/components/ContentLayout";
+import { getDefaultMonthlyData } from "@/app/actions/monthly-allocation.action";
 import AlokasiBulanan from "@/components/Screens/Alokasi/AlokasiBulanan";
 import { monthlyAllocationColumns } from "@/lib/Column";
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Alokasi Bulanan PKMU",
+  title: "Alokasi Bulanan",
 };
 
 const AlokasiBulananPage = async () => {
-  const { session, user } = await getCurrentSession();
-  if (!session && !user) {
+  const sessionData = await getCurrentSession();
+  const { session, user } = sessionData;
+
+  if (!session || !user) {
     redirect("/auth/login");
   }
+  const data = await getDefaultMonthlyData(user.companiesId);
   return (
-  //   <ContentLayout
-  //     home={"dashboard"}
-  //     mainpage={"alokasi-bulanan"}
-  //     children={
-        <AlokasiBulanan
-          columns={monthlyAllocationColumns}
-          user={user}
-        />
-    //   }
-    // />
+    <AlokasiBulanan
+      columns={monthlyAllocationColumns}
+      user={user}
+      data={data}
+    />
   );
 };
 

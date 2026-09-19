@@ -26,6 +26,7 @@ import { Download, Loader, Printer, SearchX } from "lucide-react";
 import RekapPenyaluranBe from "@/components/FeatureComponents/CetakDistribusi/RekapPenyaluranBe";
 import { id } from "date-fns/locale";
 import dynamic from "next/dynamic";
+import type { User } from "../../../../generated/prisma_client";
 
 const PDFDownloadLink = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
@@ -60,11 +61,15 @@ type LpgDistribution = {
 
 export default function DownloadComponent({
   dataBpeDeliveryAgent,
+  user,
 }: {
   dataBpeDeliveryAgent: bpeNumberData[];
+  user: User;
 }) {
+  const [userCompanyId, setUserCompanyId] = useState(user.companiesId);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<any[]>([]);
+  const [pdf, setPdf] = useState<any>([]);
+  const [companyData, setCompanyData] = useState<any>([]);
   const [isAgentFiltered, setIsAgentFiltered] = useState<boolean>(false);
   const downloadLinkRef = useRef<HTMLButtonElement>(null);
 
@@ -87,6 +92,7 @@ export default function DownloadComponent({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          company_id: userCompanyId,
           ...values,
           range: {
             from: from ? format(new Date(from), "yyyy-MM-dd") : null,
@@ -95,8 +101,9 @@ export default function DownloadComponent({
         }),
       });
       const result = await response.json();
-      // console.log(result, "API RESULT");
-      setData(result.data);
+      setPdf(result.result.data);
+      console.log(result.result.data);
+      setCompanyData(result.result.companyData);
       // Menunggu PDF ter-generate sebelum klik
       setTimeout(() => {
         downloadLinkRef.current?.click();
@@ -128,10 +135,19 @@ export default function DownloadComponent({
 
   return (
     <div className="w-full">
-      <div className="py-4 mx-4">
+      <div className=" mx-4">
+        <div className="flex md:flex-row items-start md:items-center gap-4 my-3">
+          <div className="pl-2">
+            <h1 className="text-xl md:text-2xl font-bold">
+              Rekap Penyaluran Elpiji
+            </h1>
+          </div>
+        </div>
         <Card className="px-6 py-6 my-3 shadow-lg rounded-2xl bg-white border border-gray-200">
           <div className="px-4 text-center">
-            <h1 className="text-lg font-semibold py-2 pb-4">Filter Rekap</h1>
+            <h1 className="text-lg font-semibold py-2 pb-4">
+              Filter Rekap Penyaluran Elpiji
+            </h1>
           </div>
           <Form {...form}>
             <form
@@ -279,7 +295,11 @@ export default function DownloadComponent({
         <PDFDownloadLink
           className="text-center"
           document={
-            <RekapPenyaluranBe data={data} isAgentFiltered={isAgentFiltered} />
+            <RekapPenyaluranBe
+              data={pdf}
+              company={companyData}
+              isAgentFiltered={isAgentFiltered}
+            />
           }
           fileName={`Rekap Penyaluran Elpiji.pdf`}
         >

@@ -29,6 +29,7 @@ yarn-error.log*
 .env*.local
 .env
 .env*.production
+.env.db
 
 # vercel
 .vercel
@@ -38,12 +39,10 @@ yarn-error.log*
 next-env.d.ts
 
 # Ignore Docker Compose files
-docker-compose.yml
 docker-compose.override.yml
 docker-compose.postgres.yml
 
 # Ignore Dockerfiles
-Dockerfile
 Dockerfile.dev
 Dockerfile.prod
 

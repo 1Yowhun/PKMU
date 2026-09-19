@@ -5,10 +5,11 @@ import { LpgDistributions } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { getErrorMessage } from "./error.action";
 import { getCurrentSession } from "./auth.actions";
-import { format } from "date-fns";
 import { cache } from "react";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 
-export const searchDeliveryNumber = async (query: string) => {
+export const searchDeliveryNumber = async (query: string, user: number) => {
   try {
     if (!query) return [];
     const getAllocationData = await prisma.allocations.findMany({
@@ -22,6 +23,11 @@ export const searchDeliveryNumber = async (query: string) => {
           {
             deliveryNumber: {
               equals: query,
+            },
+          },
+          {
+            creator: {
+              companiesId: user,
             },
           },
         ],
@@ -79,11 +85,19 @@ export const postLpgData = async (formData: FormData) => {
     return {
       error: "Semua field harus diisi",
     };
+  const { user } = await getCurrentSession();
+  if (!user)
+    return {
+      error: "User tidak ada atau user belum login",
+    };
 
   const checkLpgData = await prisma.lpgDistributions.findMany({
     where: {
       giDate: waktuPengambilan,
       bpeNumber: nomorTransaksi,
+      creator: {
+        companiesId: user.companiesId,
+      },
     },
   });
 
@@ -94,11 +108,6 @@ export const postLpgData = async (formData: FormData) => {
   }
 
   try {
-    const { user } = await getCurrentSession();
-    if (!user)
-      return {
-        error: "User tidak ada atau user belum login",
-      };
     const dataLpg: LpgDistributions = await prisma.lpgDistributions.create({
       data: {
         allocationId: allocationid,
@@ -214,7 +223,7 @@ export const deleteLpgData = async (id: number) => {
   }
 };
 
-export const getNextNumber = async () => {
+export const getNextNumber = async (company_id: number) => {
   try {
     const date = new Date();
     const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -225,6 +234,9 @@ export const getNextNumber = async () => {
       where: {
         status: { in: ["Pending", "Approved"] },
         bpeNumber: { startsWith: prefix },
+        creator: {
+          companiesId: company_id,
+        },
       },
       select: { bpeNumber: true },
       orderBy: { bpeNumber: "desc" },
@@ -249,24 +261,41 @@ export const getNextNumber = async () => {
   }
 };
 
-export const getFilterData = cache(async () => {
+export const getFilterData = cache(async (company_id: number) => {
   return await prisma.agents.findMany({
     select: {
       agentName: true,
+    },
+    where: {
+      creator: {
+        companiesId: company_id,
+      },
     },
     orderBy: { agentName: "asc" },
   });
 });
 
-export const getLpgDataDefault = async () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+export const getLpgDataDefault = async (company_id: number) => {
+  const now = new Date();
+  const jakartaTime = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+  );
+  jakartaTime.setHours(0, 0, 0, 0);
 
   return await prisma.lpgDistributions.findMany({
     where: {
-      giDate: {
-        gte: today,
-      },
+      AND: [
+        {
+          giDate: {
+            gte: jakartaTime,
+          },
+        },
+        {
+          creator: {
+            companiesId: company_id,
+          },
+        },
+      ],
     },
     select: {
       id: true,
@@ -285,6 +314,7 @@ export const getLpgDataDefault = async () => {
       bocor: true,
       isiKurang: true,
       updatedAt: true,
+      createdBy: true,
     },
   });
 };

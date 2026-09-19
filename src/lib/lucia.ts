@@ -8,7 +8,7 @@ export function setSessionTokenCookie(token: string, expiresAt: Date): void {
   cookies().set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     expires: expiresAt,
     path: "/",
   });
@@ -18,7 +18,7 @@ export function deleteSessionTokenCookie(): void {
   cookies().set(SESSION_COOKIE_NAME, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     maxAge: 0,
     path: "/",
   });
@@ -27,7 +27,6 @@ export function deleteSessionTokenCookie(): void {
 export function getSessionToken(): string | undefined {
   return cookies().get(SESSION_COOKIE_NAME)?.value;
 }
-
 
 export async function setSession(userId: string) {
   const token = generateSessionToken();

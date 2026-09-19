@@ -4,18 +4,20 @@ import { getFilterData } from "@/app/actions/lpg-distribution.action";
 import DownloadComponent from "@/components/Screens/Download/DownloadComponent";
 
 export const metadata = {
-  title: "Rekap Penyaluran PKMU",
+  title: "Rekap Penyaluran",
 };
 
 export default async function DownloadPage() {
-  const [dataBpeDeliveryAgent, sessionData] = await Promise.all([
-    getFilterData(),
-    getCurrentSession(),
-  ]);
-
-  const { user, session } = sessionData;
+  const { user, session } = await getCurrentSession();
   if (!session && !user) {
     redirect("/auth/login");
   }
-  return <DownloadComponent dataBpeDeliveryAgent={dataBpeDeliveryAgent} />;
+  const dataBpeDeliveryAgent = await getFilterData(user.companiesId);
+
+  return (
+    <DownloadComponent
+      dataBpeDeliveryAgent={dataBpeDeliveryAgent}
+      user={user}
+    />
+  );
 }

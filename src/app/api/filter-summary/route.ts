@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     }
     const body = await req.json();
 
-    const { from, to } = body;
+    const { from, to, company_id } = body;
 
     let fromDate = from ? new Date(from) : null;
     let toDate = to ? new Date(to) : null;
@@ -29,72 +29,128 @@ export async function POST(req: NextRequest) {
 
     const dateFilter = fromDate && toDate ? { gte: fromDate, lte: toDate } : {};
 
-    const [dailySummary, dailySummaryGiDate, distributionSummary, monthlyData, uniqueDate] =
-      await prisma.$transaction([
-        prisma.allocations.aggregate({
-          _sum: { allocatedQty: true },
-          _count: { allocatedQty: true },
-          where: { plannedGiDate: dateFilter },
-          orderBy: { plannedGiDate: "asc" },
-        }),
-        prisma.allocations.aggregate({
-          _sum: { allocatedQty: true },
-          _count: { allocatedQty: true },
-          where: { giDate: dateFilter },
-          orderBy: { giDate: "asc" },
-        }),
-        prisma.lpgDistributions.aggregate({
-          _sum: { distributionQty: true },
-          _count: { distributionQty: true },
-          where: { giDate: dateFilter },
-          orderBy: { giDate: "asc" },
-        }),
-        prisma.monthlyAllocations.aggregate({
-          _sum: { totalElpiji: true },
-          _count: { totalElpiji: true },
-          where: { date: dateFilter },
-          orderBy: { date: "asc" },
-        }),
-        prisma.lpgDistributions.findMany({
-          distinct: ["giDate"],
-          select: {
-            giDate: true,
-          },
-          where: { giDate: dateFilter },
-          orderBy: {
-            giDate: "asc",
-          },
-        }),
-      ]);
-
-    console.log(dailySummary);
+    const [
+      dailySummary,
+      dailySummaryGiDate,
+      distributionSummary,
+      monthlyData,
+      uniqueDate,
+    ] = await prisma.$transaction([
+      prisma.allocations.aggregate({
+        _sum: { allocatedQty: true },
+        _count: { allocatedQty: true },
+        where: {
+          AND: [
+            { plannedGiDate: dateFilter },
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
+          ],
+        },
+        orderBy: { plannedGiDate: "asc" },
+      }),
+      prisma.allocations.aggregate({
+        _sum: { allocatedQty: true },
+        _count: { allocatedQty: true },
+        where: {
+          AND: [
+            { giDate: dateFilter },
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
+          ],
+        },
+        orderBy: { giDate: "asc" },
+      }),
+      prisma.lpgDistributions.aggregate({
+        _sum: { distributionQty: true },
+        _count: { distributionQty: true },
+        where: {
+          AND: [
+            { giDate: dateFilter },
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
+          ],
+        },
+        orderBy: { giDate: "asc" },
+      }),
+      prisma.monthlyAllocations.aggregate({
+        _sum: { totalElpiji: true },
+        _count: { totalElpiji: true },
+        where: {
+          AND: [
+            { date: dateFilter },
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
+          ],
+        },
+        orderBy: { date: "asc" },
+      }),
+      prisma.lpgDistributions.findMany({
+        distinct: ["giDate"],
+        select: {
+          giDate: true,
+        },
+        where: {
+          AND: [
+            { giDate: dateFilter },
+            {
+              creator: {
+                companiesId: company_id,
+              },
+            },
+          ],
+        },
+        orderBy: {
+          giDate: "asc",
+        },
+      }),
+    ]);
 
     const totalProps = uniqueDate.reduce(
       (a, obj) => a + Object.keys(obj).length,
       0
     );
 
+    // Pake buat PlannedGi
     const dailyAllo = dailySummary._sum?.allocatedQty;
+
+    // Pake buat GiDate
     const dailyAlloGiDate = dailySummaryGiDate._sum?.allocatedQty;
     const dailyDistri = distributionSummary._sum?.distributionQty;
     const dailyMonthly = monthlyData._sum?.totalElpiji;
 
     const pending =
-      (dailyAlloGiDate ?? 0) > (dailyDistri ?? 0)
-        ? (dailyAlloGiDate ?? 0) - (dailyDistri ?? 0)
+      (dailyAllo ?? 0) > (dailyDistri ?? 0)
+        ? (dailyAllo ?? 0) - (dailyDistri ?? 0)
         : 0;
 
     const fakultatif =
-      (dailyAlloGiDate ?? 0) > (dailyMonthly ?? 0)
-        ? (dailyAlloGiDate ?? 0) - (dailyMonthly ?? 0)
+      (dailyAllo ?? 0) > (dailyMonthly ?? 0)
+        ? (dailyAllo ?? 0) - (dailyMonthly ?? 0)
         : 0;
 
     const tidakTembus =
-      (dailyMonthly ?? 0) > (dailyAlloGiDate ?? 0)
-        ? (dailyMonthly ?? 0 ?? 0) - (dailyAlloGiDate ?? 0)
+      (dailyMonthly ?? 0) > (dailyAllo ?? 0)
+        ? (dailyMonthly ?? 0) - (dailyAllo ?? 0)
         : 0;
 
-    const average = ((dailyAllo ?? 0) / (totalProps || 1)).toFixed(2);
+    const average = ((dailyDistri ?? 0) / (totalProps || 1)).toFixed(2);
+
+    const avgDistriSummary = {
+      _sum: { average: average },
+      _count: { businessDays: totalProps },
+    };
 
     // Contoh response
     return NextResponse.json(
@@ -102,6 +158,7 @@ export async function POST(req: NextRequest) {
         message: "Date range received",
         dailySummary,
         distributionSummary,
+        avgDistriSummary,
         monthlyData,
         pending,
         fakultatif,

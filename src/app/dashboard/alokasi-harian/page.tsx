@@ -7,32 +7,26 @@ import AlokasiHarian from "@/components/Screens/Alokasi/AlokasiHarian";
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Alokasi PKMU",
+  title: "Alokasi Harian",
 };
 
 const AlokasiPage = async () => {
-  const [dataBpeDeliveryAgent, sessionData, defaultData] = await Promise.all([
-    getFilterDataAllocation(),
-    getCurrentSession(),
-    getAllocationDefault(),
-  ]);
-  const { user, session } = sessionData;
-  if (!session && !user) {
+  const sessionData = await getCurrentSession();
+  const { session, user } = sessionData;
+
+  if (!session || !user) {
     redirect("/auth/login");
   }
+  const [dataBpeDeliveryAgent, defaultData] = await Promise.all([
+    getFilterDataAllocation(user.companiesId),
+    getAllocationDefault(user.companiesId),
+  ]);
   return (
     <AlokasiHarian
       user={user}
       defaultdata={defaultData}
       dataBpeDeliveryAgent={dataBpeDeliveryAgent}
     />
-
-    // <AlokasiHarian
-    //   columns={
-    //     user.role === "ADMIN" ? adminAllocationColumns : allocationColumns
-    //   }
-    //   user={user}
-    // />
   );
 };
 

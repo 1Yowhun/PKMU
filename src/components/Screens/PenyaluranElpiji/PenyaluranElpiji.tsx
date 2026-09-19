@@ -45,6 +45,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { id } from "date-fns/locale";
 import { User } from "../../../../generated/prisma_client";
 import Link from "next/link";
+import { toast } from "@/hooks/use-toast";
 
 type valuesFilter = {
   agentName: string;
@@ -63,7 +64,7 @@ export default function PenyaluranElpiji({
 }: {
   user: User;
   dataBpeDeliveryAgent: bpeNumberData[];
-  defaultData: any[];
+  defaultData: any;
 }) {
   const uniqueAgents = [
     ...new Set(defaultData.map((allocation: any) => allocation.agentName)),
@@ -84,6 +85,7 @@ export default function PenyaluranElpiji({
   const formattedTotalBeratQty = totalBeratQty.toLocaleString("id-ID");
 
   const [loading, setLoading] = useState(false);
+  const [userCompanyId, setUserCompanyId] = useState(user.companiesId);
   const [isFiltered, setIsFiltered] = useState(true);
   const [paginationLoading, setPaginationLoading] = useState(false);
   const [tableData, setTableData] = useState(defaultData);
@@ -119,6 +121,7 @@ export default function PenyaluranElpiji({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          company_id: userCompanyId,
           ...values,
           range: {
             from: from ? format(new Date(from), "yyyy-MM-dd") : null,
@@ -129,6 +132,17 @@ export default function PenyaluranElpiji({
         }),
       });
       const result = await response.json();
+      if (!result.data || result.data.length === 0) {
+        toast({
+          title: "Tidak ada data",
+          description: "Tidak ditemukan data untuk filter yang dipilih.",
+          variant: "destructive",
+          duration: 1000,
+        });
+        setTableData([]); // Kosongkan tabel
+      } else {
+        setTableData(result.data);
+      }
       setData({
         totalTabung: result.cardInfo.totalQty.toLocaleString("id-ID"),
         totalBeratTabung: result.cardInfo.totalBeratQty.toLocaleString("id-ID"),
@@ -188,7 +202,12 @@ export default function PenyaluranElpiji({
   return (
     <div className="mx-5">
       <div className="mb-4">
-        <div className="pt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
+        <div className="flex md:flex-row items-start md:items-center gap-4 my-3">
+          <div className="pl-2">
+            <h1 className="text-xl md:text-2xl font-bold">Penyaluran Elpiji</h1>
+          </div>
+        </div>
+        <div className="pt-2 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
           <InfoCard
             icon={<CalendarCheck className="h-10 w-10 text-white" />}
             title="TOTAL TABUNG"
@@ -213,7 +232,9 @@ export default function PenyaluranElpiji({
         </div>
         <Card className="px-6 py-6 my-3 shadow-lg rounded-2xl bg-white border border-gray-200">
           <div className="px-4 text-center">
-            <h1 className="text-lg font-semibold py-2 pb-4">Filter Rekap</h1>
+            <h1 className="text-lg font-semibold py-2 pb-4">
+              Filter Penyaluran Elpiji
+            </h1>
           </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

@@ -46,16 +46,15 @@ export function LoginForm() {
       toast({
         variant: "destructive",
         title: result.error,
-        duration: 3000,
+        // duration: 3000,
       });
       router.push("/auth/login");
     } else {
-      router.push("/summary");
-      toast({
-        title: "Login has been successfully",
-        duration: 3000,
-      });
       setIsLoading(false);
+      toast({
+        title: "Login berhasil",
+      });
+      router.push("/summary");
     }
   }
 
@@ -63,13 +62,24 @@ export function LoginForm() {
     <Card className="w-screen max-w-lg rounded-lg shadow-lg">
       <CardHeader className="pb-4 flex">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-2xl font-semibold">
+          <CardTitle className="text-xl font-semibold mr-2">
             Selamat Datang Kembali!
           </CardTitle>
-          <div className="w-20 h-20 bg-primary/10 flex items-center justify-center rounded">
-            <div className="text-primary text-xl font-bold">
-              <Image src="/icon.svg" width={100} height={100} alt="Icon" />
-            </div>
+          <div className="flex items-center justify-center space-x-2">
+            <Image
+              src="https://f6oujhgi9dzrtqrk.public.blob.vercel-storage.com/SVG%20to%20PNG%20Conversion%20%281%29-Xec3SuuiyCo71J4ndm3O533x0jWGTb.png"
+              width={80}
+              height={80}
+              alt="Icon PKMU"
+              className="object-contain max-w-[60%] sm:max-w-[80px]"
+            />
+            <Image
+              src="https://f6oujhgi9dzrtqrk.public.blob.vercel-storage.com/Logo%20Satya%20Mitra%20Gas-ivGydVea6ML0snBVxegT9AGFX3fqmc.png"
+              width={90}
+              height={90}
+              alt="Icon SMG"
+              className="object-contain max-w-[60%] sm:max-w-[90px]"
+            />
           </div>
         </div>
         <CardDescription className="text-gray-500">

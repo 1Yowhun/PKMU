@@ -54,7 +54,6 @@ type valuesFilter = {
 
 type bpeNumberData = {
   agentName: string;
-  deliveryNumber: string;
 };
 
 export default function RekapanScreen({
@@ -85,6 +84,7 @@ export default function RekapanScreen({
   const formattedTotalBeratQty = totalBeratQty.toLocaleString("id-ID");
 
   const [loading, setLoading] = useState(false);
+  const [userCompanyId, setUserCompanyId] = useState(user.companiesId);
   const [isFiltered, setIsFiltered] = useState(true);
   const [paginationLoading, setPaginationLoading] = useState(false);
   const [tableData, setTableData] = useState(defaultData);
@@ -121,6 +121,7 @@ export default function RekapanScreen({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          company_id: userCompanyId,
           ...values,
           range: {
             from: from ? format(new Date(from), "yyyy-MM-dd") : null,
@@ -234,26 +235,6 @@ export default function RekapanScreen({
                           onSelect={field.onChange}
                           valueKey="agentName"
                           displayKey="agentName"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="deliveryNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-lg">Nomor DO</FormLabel>
-                      <FormControl>
-                        <ComboBoxNelsen
-                          placeholder="Pilih Nomor DO"
-                          data={dataBpeDeliveryAgent}
-                          selectedValue={field.value}
-                          onSelect={field.onChange}
-                          valueKey="deliveryNumber"
-                          displayKey="deliveryNumber"
                         />
                       </FormControl>
                       <FormMessage />
@@ -380,12 +361,6 @@ export default function RekapanScreen({
             currentPage={pagination.page}
             totalPages={pagination.totalPages}
           />
-          {/* <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            onPageChange={handlePageChange}
-            loading={paginationLoading}
-          /> */}
         </div>
       </div>
     </div>

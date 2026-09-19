@@ -13,22 +13,34 @@ import {
 
 export function SummarySidebar({
   items,
+  activeItem,
+  onClick,
 }: {
   items: {
     name: string;
     url: string;
     icon: LucideIcon;
   }[];
+  activeItem: string | null;
+  onClick: (url: string) => void;
 }) {
-  const { isMobile } = useSidebar();
-
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Analytics</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton
+              className={[
+                activeItem === item.url ? "bg-gray-100" : "hover:bg-gray-100",
+                "my-1",
+              ].join(" ")}
+              asChild
+              onClick={(e) => {
+                // e.preventDefault();
+                onClick(item.url);
+              }}
+            >
               <a href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>

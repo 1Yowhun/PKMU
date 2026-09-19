@@ -1,23 +1,14 @@
 import { getCurrentSession } from "@/app/actions/auth.actions";
-import { ContentLayout } from "@/components/ContentLayout";
 import Register from "@/components/Screens/Register/RegisterForm";
 
 export const metadata = {
-  title: "Register PKMU",
+  title: "Registrasi",
 };
 
 const RegisterPage = async () => {
   const { user } = await getCurrentSession();
   const role = user?.role || "USER";
-  return (
-    // <ContentLayout
-    //   home={"setting"}
-    //   mainpage={"register"}
-    //   children={
-        <Register role={role} />
-    //   }
-    // />
-  );
+  return <Register role={role} />;
 };
 
 export default RegisterPage;

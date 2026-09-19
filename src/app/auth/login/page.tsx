@@ -1,9 +1,9 @@
 import React from "react";
 import { LoginForm } from "./login";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SignUpForm from "./RegisterCard";
 import { checkUserDb, getCurrentSession } from "@/app/actions/auth.actions";
 import { redirect } from "next/navigation";
+import SignUpForm from "./signup";
 
 const Auth = async () => {
   const [user, test] = await Promise.all([checkUserDb(), getCurrentSession()]);
@@ -15,14 +15,14 @@ const Auth = async () => {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Tabs defaultValue="login" className="w-auto">
-        <TabsList>
-          {hasUsers && (
+        {hasUsers && (
+          <TabsList>
             <div>
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Register</TabsTrigger>
             </div>
-          )}
-        </TabsList>
+          </TabsList>
+        )}
         <TabsContent value="login">
           <LoginForm />
         </TabsContent>

@@ -9,39 +9,32 @@ import {
 } from "../actions/summary.action";
 
 export const metadata = {
-  title: "Data Summary PKMU",
+  title: "Data Summary",
 };
 
 const SummaryPage = async () => {
-  const [sessionData, summaryData, weekly, annually, allData] =
-    await Promise.all([
-      getCurrentSession(),
-      getSummaryToday(),
-      getWeeklySummaryDefault(),
-      getAnnualSummaryData(),
-      allDataDefault(),
-    ]);
-
+  const sessionData = await getCurrentSession();
   const { session, user } = sessionData;
-  if (!session && !user) {
+
+  if (!session || !user) {
     redirect("/auth/login");
   }
 
-  return (
-    // <ContentLayout
-    //   home={"summary"}
-    //   children={
-    <>
-      <Summary
-        defaultdata={summaryData}
-        weekly={weekly}
-        annually={annually}
-        allData={allData}
-      />
-    </>
+  const [summaryData, weekly, annually, allData] = await Promise.all([
+    getSummaryToday(user.companiesId),
+    getWeeklySummaryDefault(user.companiesId),
+    getAnnualSummaryData(user.companiesId),
+    allDataDefault(user.companiesId),
+  ]);
 
-    // }
-    // />
+  return (
+    <Summary
+      defaultdata={summaryData}
+      weekly={weekly}
+      annually={annually}
+      allData={allData}
+      user={user}
+    />
   );
 };
 

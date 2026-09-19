@@ -19,6 +19,13 @@ const Companies = <TData, TValue>({
   return (
     <div className="mx-5">
       <div className="mb-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-4">
+          <div className="pl-1">
+            <h1 className="text-xl md:text-2xl font-bold">
+              Master Data Perusahaan
+            </h1>
+          </div>
+        </div>
         {/* {user.role === "ADMIN" && (
           <div className="justify-start mb-1">
             <Button variant="default" className="ml-auto justify-start" asChild>

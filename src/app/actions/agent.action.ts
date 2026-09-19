@@ -7,31 +7,20 @@ import { getCompaniesAll } from "./companies.action";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "./auth.actions";
 import { cache } from "react";
-import { error } from "console";
 
-export const getAgentsAll = cache(async () => {
-  const companiesData = await getCompaniesAll();
-  if (!companiesData) {
-    redirect("/master-data/companies/form");
-  }
-  return prisma.agents.findMany();
-});
-
-export const getAgentsName = cache(async () => {
+export const getAgentsAll = cache(async (users: string, id: number) => {
   const companiesData = await getCompaniesAll();
   if (!companiesData) {
     redirect("/master-data/companies/form");
   }
   return prisma.agents.findMany({
-    distinct: ["agentName"],
-    select: {
-      agentName: true,
+    where: {
+      companyId: id,
     },
   });
 });
-
 export const postAgentData = async (formData: FormData) => {
-  const agentName = formData.get("agentName")?.toString();
+  const agentName = formData.get("agentName")?.toString().toUpperCase();
   const shipTo = formData.get("shipTo")?.toString() || null;
   const companyId = Number(formData.get("companyId"));
   const address = formData.get("address")?.toString();
@@ -50,17 +39,28 @@ export const postAgentData = async (formData: FormData) => {
       error: "User tidak ditemukan. Silakan login kembali.",
     };
   }
+
+  if (companyId !== user.companiesId) {
+    return {
+      error: "Anda tidak memiliki akses ke perusahaan ini",
+    };
+  }
+
+  // Cek duplikasi nama agent
+  const checkSameAgent = await prisma.agents.findFirst({
+    where: {
+      companyId: companyId,
+      agentName: agentName,
+    },
+  });
+
+  if (checkSameAgent) {
+    return {
+      error: "Nama agent sudah digunakan",
+    };
+  }
+
   try {
-    const checkSameAgent = await prisma.agents.findFirst({
-      where: {
-        agentName: agentName,
-      },
-    })
-    if (checkSameAgent) {
-      return {
-        error: "Nama agent sudah digunakan",
-      };
-    }
     const postData: Agents = await prisma.agents.create({
       data: {
         agentName: agentName,
@@ -78,15 +78,13 @@ export const postAgentData = async (formData: FormData) => {
     revalidatePath("/data-master/agents");
     return { success: true, data: postData };
   } catch (error) {
-    const errorMessage = getErrorMessage(error);
-    console.error("Database Error: ", errorMessage);
     return {
       error: getErrorMessage(error),
     };
   }
 };
 export const updateAgentData = async (formData: FormData) => {
-  const agentNameLabel = formData.get("agentName")?.toString();
+  const agentNameLabel = formData.get("agentName")?.toString().toUpperCase();
   const shipTo = formData.get("shipTo")?.toString()
     ? formData.get("shipTo")?.toString()
     : null;
@@ -104,24 +102,41 @@ export const updateAgentData = async (formData: FormData) => {
     };
   }
 
-  try {
-    // Cek duplikasi nama agent
-    const sameAgentName = await prisma.agents.findFirst({
-      where: {
-        agentName: agentNameLabel,
-        id: {
-          not: agentId,
-        },
+  const { user } = await getCurrentSession();
+  if (!user) {
+    return {
+      error: "User tidak ditemukan. Silakan login kembali.",
+    };
+  }
+
+  const existingAgent = await prisma.agents.findUnique({
+    where: { id: agentId },
+  });
+
+  if (!existingAgent || existingAgent.companyId !== user.companiesId) {
+    return {
+      error: "Anda tidak memiliki izin untuk mengubah data agent ini.",
+    };
+  }
+
+  // Cek duplikasi nama agent
+  const sameAgentName = await prisma.agents.findFirst({
+    where: {
+      companyId: user.companiesId,
+      agentName: agentNameLabel,
+      id: {
+        not: agentId,
       },
-    });
+    },
+  });
 
-    if (sameAgentName) {
-      return {
-        error: "Terdapat nama agent yang sama",
-      };
-    }
+  if (sameAgentName) {
+    return {
+      error: "Terdapat nama agent yang sama",
+    };
+  }
 
-
+  try {
     // Update data agent
     const updatedAgent = await prisma.agents.update({
       where: { id: agentId },

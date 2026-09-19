@@ -322,7 +322,6 @@ export const adminAllocationColumns: ColumnDef<Allocation>[] = [
   {
     accessorKey: "agentName",
     header: "Nama Agen",
-    enableSorting: false,
   },
   {
     accessorKey: "materialName",

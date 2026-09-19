@@ -11,7 +11,6 @@ import {
 } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useFormStatus } from "react-dom";
 import { useDebouncedCallback } from "use-debounce";
 import { postLpgData } from "@/app/actions/lpg-distribution.action";
 import { FormSubmit } from "@/lib/types";
@@ -157,7 +156,6 @@ const DistributionForm = ({ data, bpe, user }: FormSubmit) => {
               placeholder="Status"
               name="status"
               value="Approved"
-              defaultValue="Approved"
               readOnly
             />
           </div>

@@ -25,6 +25,7 @@ export default function UploadAlokasi({
     id: string;
     username: string;
     role: string;
+    companiesId: number;
   };
 }) {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function UploadAlokasi({
   const [tableData, setTableData] = useState<Allocation[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
+  const [userCompany, setUserCompany] = useState(user.companiesId);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -156,7 +158,7 @@ export default function UploadAlokasi({
   const uploadExcel = async () => {
     setLoading(true);
     if (selectedFile && tableData.length > 0) {
-      const result = await uploadBulkExcel(tableData);
+      const result = await uploadBulkExcel(tableData, userCompany);
       if (result?.success) {
         setLoading(false);
         toast({
